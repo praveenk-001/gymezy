@@ -51,7 +51,7 @@ export default function Footer() {
               <a
                 href="https://maps.app.goo.gl/dr3vvVmQom43A1Yz7"
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="nofollow noopener noreferrer"
                 className="footer-map-link"
                 title="View on Google Maps"
               >
