@@ -1,24 +1,30 @@
 {
   "expo": {
-    "name": "user-react",
-    "slug": "user-react",
+    "name": "GYMEZY",
+    "slug": "gymezy",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/logo/gymezy.jpeg",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/logo/gymezy.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#003882"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gymezy.user"
     },
     "android": {
+      "package": "com.gymezy.user",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#003882",
+        "foregroundImage": "./assets/logo/gymezy.jpeg",
+        "backgroundImage": "./assets/android-icon-background.png"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/logo/gymezy.jpeg"
     },
     "plugins": [
       "expo-font",

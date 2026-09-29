@@ -5,405 +5,481 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Image,
-  Modal,
-  TextInput,
+  Dimensions,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
-import { AppColors } from '../theme/appTheme';
+import { AppColors, AppTheme } from '../theme/appTheme';
 import { useBookingRepository } from '../data/BookingContext';
-import { useToast } from '../widgets/CustomScaffoldMessage';
+import { MockData } from '../data/mockData';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const TABS = ['Upcoming', 'Completed', 'Cancelled'];
 
-const CANCEL_REASONS = [
-  'Change of workout plans',
-  'Health or medical issue',
-  'Booked incorrect date / time slot',
-  'Traveling or busy schedule',
-  'Other reasons',
-];
-
-export const MyBookingsScreen = ({ navigation }) => {
+export const MyBookingsScreen = ({ navigation, initialShowHub = false }) => {
   const { isDark, colors } = useTheme();
-  const { bookings, cancelBooking, updateBooking } = useBookingRepository();
-  const { showToast } = useToast();
+  const { bookings, memberships } = useBookingRepository();
 
-  const [activeTab, setActiveTab] = useState('Upcoming');
+  const [showHub, setShowHub] = useState(initialShowHub);
+  const [selectedTab, setSelectedTab] = useState('Upcoming');
 
-  // Cancel Modal state
-  const [cancelModalVisible, setCancelModalVisible] = useState(false);
-  const [selectedBookingForCancel, setSelectedBookingForCancel] = useState(null);
-  const [selectedReason, setSelectedReason] = useState(CANCEL_REASONS[0]);
+  const upcomingCount = bookings.filter((b) => b.status === 'Upcoming').length;
+  const completedCount = bookings.filter((b) => b.status === 'Completed').length;
+  const cancelledCount = bookings.filter((b) => b.status === 'Cancelled').length;
 
-  // Reschedule Modal state
-  const [rescheduleModalVisible, setRescheduleModalVisible] = useState(false);
-  const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState(null);
-  const [newTimeSlot, setNewTimeSlot] = useState('07:00 AM - 08:00 AM');
+  const filteredBookings = bookings.filter((b) => b.status === selectedTab);
 
-  const filteredBookings = bookings.filter((b) => b.status === activeTab);
-
-  const handleConfirmCancel = () => {
-    if (!selectedBookingForCancel) return;
-    cancelBooking(selectedBookingForCancel.id, selectedReason);
-    setCancelModalVisible(false);
-    showToast({
-      message: 'Booking cancelled successfully. Refund initiated.',
+  const bookNewSession = (category = 'Gym') => {
+    const defaultGym = MockData.gyms[0];
+    navigation.navigate('BookingSession', {
+      gym: defaultGym,
+      initialCategory: category,
     });
   };
 
-  const handleConfirmReschedule = () => {
-    if (!selectedBookingForReschedule) return;
-    updateBooking({
-      ...selectedBookingForReschedule,
-      time: newTimeSlot,
-    });
-    setRescheduleModalVisible(false);
-    showToast({
-      message: 'Booking rescheduled successfully!',
-      isSuccess: true,
-    });
+  const buyMembership = () => {
+    const defaultGym = MockData.gyms[0];
+    navigation.navigate('BuyMembership', { gym: defaultGym });
+  };
+
+  const openBookingDetails = (booking) => {
+    navigation.navigate('BookingDetails', { booking });
+  };
+
+  const getCategoryIcon = (type, iconName) => {
+    const t = (type || '').toLowerCase();
+    if (t.includes('yoga')) {
+      return {
+        name: 'self-improvement',
+        color: '#8B5CF6',
+        bg: isDark ? 'rgba(139, 92, 246, 0.25)' : 'rgba(139, 92, 246, 0.12)',
+      };
+    }
+    if (t.includes('zumba') || t.includes('dance')) {
+      return {
+        name: 'music-note',
+        color: '#EC4899',
+        bg: isDark ? 'rgba(236, 72, 153, 0.25)' : 'rgba(236, 72, 153, 0.12)',
+      };
+    }
+    return {
+      name: 'fitness-center',
+      color: isDark ? '#93C5FD' : AppColors.primaryColor,
+      bg: isDark ? 'rgba(0, 56, 130, 0.35)' : 'rgba(0, 56, 130, 0.12)',
+    };
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>My Bookings</Text>
-        <Text style={[styles.subtitle, { color: colors.subtitle }]}>
-          Manage single session & class passes
-        </Text>
-      </View>
-
-      {/* Segmented Filter Tabs */}
-      <View style={styles.tabsWrapper}>
-        <View
-          style={[
-            styles.tabsContainer,
-            {
-              backgroundColor: isDark ? '#1E1E1E' : '#F1F5F9',
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          {TABS.map((tab) => {
-            const isSelected = activeTab === tab;
-            const count = bookings.filter((b) => b.status === tab).length;
-            return (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                style={[
-                  styles.tabItem,
-                  {
-                    backgroundColor: isSelected
-                      ? isDark
-                        ? '#262626'
-                        : '#FFFFFF'
-                      : 'transparent',
-                    shadowOpacity: isSelected ? 0.06 : 0,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    {
-                      color: isSelected
-                        ? isDark
-                          ? '#FFFFFF'
-                          : AppColors.primaryNavy
-                        : colors.subtitle,
-                      fontWeight: isSelected ? '800' : '600',
-                    },
-                  ]}
-                >
-                  {tab} ({count})
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+      {/* Top Header matching Flutter */}
+      <View style={styles.appBar}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.appBarTitle, { color: colors.text }]}>
+            {showHub ? 'Booking Hub' : 'My Bookings'}
+          </Text>
+          {!showHub && (
+            <Text style={styles.activePassesSub}>
+              {upcomingCount} active {upcomingCount === 1 ? 'pass' : 'passes'}
+            </Text>
+          )}
         </View>
+
+        {/* Top Right Action: "+ Book" Gradient Pill */}
+        <TouchableOpacity
+          onPress={() => bookNewSession('Gym')}
+          style={styles.bookCtaPillWrapper}
+          activeOpacity={0.85}
+        >
+          <LinearGradient
+            colors={[AppColors.primaryColor, '#0D47A1']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.bookCtaPill}
+          >
+            <MaterialIcons name="add" size={16} color="#FFFFFF" />
+            <Text style={styles.bookCtaText}>Book</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Hub View / List View Toggle Button */}
+        <TouchableOpacity
+          onPress={() => setShowHub(!showHub)}
+          style={styles.hubToggleBtn}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons
+            name={showHub ? 'view-agenda' : 'grid-view'}
+            size={22}
+            color={isDark ? '#E2E8F0' : '#01327E'}
+          />
+        </TouchableOpacity>
       </View>
 
-      {/* Bookings List */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {filteredBookings.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <MaterialIcons name="event-busy" size={50} color={colors.subtitle} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              No {activeTab} Bookings
-            </Text>
-            <Text style={[styles.emptySub, { color: colors.subtitle }]}>
-              When you book workout sessions, your digital passes will appear here.
-            </Text>
-          </View>
-        ) : (
-          filteredBookings.map((booking) => {
-            const isUpcoming = booking.status === 'Upcoming';
-            return (
+      {showHub ? (
+        /* ========================================== */
+        /* PANEL 1: CHOOSE WHAT YOU WANT TO DO (HUB)  */
+        /* ========================================== */
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.hubScrollContent}
+        >
+          <Text style={[styles.hubSectionHeading, { color: colors.text }]}>
+            Choose What You Want to Do
+          </Text>
+
+          {/* 1. Buy Membership Hub Card */}
+          <TouchableOpacity
+            onPress={buyMembership}
+            style={[
+              styles.hubCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+            activeOpacity={0.88}
+          >
+            <View style={[styles.hubIconCircle, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
+              <MaterialIcons name="workspace-premium" size={28} color="#8B5CF6" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={[styles.hubCardTitle, { color: colors.text }]}>Buy Membership</Text>
+              <Text style={[styles.hubCardSub, { color: colors.subtitle }]}>
+                Unlimited all-access gym passes & trainer plans
+              </Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={22} color={colors.subtitle} />
+          </TouchableOpacity>
+
+          {/* 2. Session Bookings Hub Card */}
+          <TouchableOpacity
+            onPress={() => bookNewSession('Gym')}
+            style={[
+              styles.hubCard,
+              { backgroundColor: colors.card, borderColor: colors.border, marginTop: 14 },
+            ]}
+            activeOpacity={0.88}
+          >
+            <View
+              style={[
+                styles.hubIconCircle,
+                { backgroundColor: 'rgba(0, 56, 130, 0.12)' },
+              ]}
+            >
+              <MaterialIcons name="fitness-center" size={28} color={AppColors.primaryColor} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={[styles.hubCardTitle, { color: colors.text }]}>Book Workout Session</Text>
+              <Text style={[styles.hubCardSub, { color: colors.subtitle }]}>
+                Single day passes, Yoga, Zumba & HIIT classes
+              </Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={22} color={colors.subtitle} />
+          </TouchableOpacity>
+
+          {/* 3. Quick Workout Categories Grid */}
+          <Text style={[styles.hubSubheading, { color: colors.text }]}>
+            Quick Session Categories
+          </Text>
+          <View style={styles.categoryGrid}>
+            {[
+              { label: 'Gym Access', icon: 'fitness-center', color: '#003882' },
+              { label: 'Yoga Class', icon: 'self-improvement', color: '#8B5CF6' },
+              { label: 'Zumba Class', icon: 'music-note', color: '#EC4899' },
+              { label: 'HIIT / Cardio', icon: 'bolt', color: '#EF4444' },
+            ].map((cat) => (
               <TouchableOpacity
-                key={booking.id}
-                onPress={() => navigation.navigate('BookingDetails', { booking })}
-                activeOpacity={0.88}
+                key={cat.label}
+                onPress={() => bookNewSession(cat.label.split(' ')[0])}
                 style={[
-                  styles.bookingCard,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: colors.border,
-                  },
+                  styles.categoryCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
                 ]}
+                activeOpacity={0.8}
               >
-                {/* Header Row */}
-                <View style={styles.cardHeaderRow}>
-                  <Image
-                    source={{ uri: booking.gymImageUrl }}
-                    style={styles.gymThumb}
-                    resizeMode="cover"
-                  />
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <View style={styles.cardHeaderTop}>
-                      <Text style={[styles.cardGymName, { color: colors.text }]} numberOfLines={1}>
-                        {booking.gymName}
-                      </Text>
+                <View style={[styles.catIconBox, { backgroundColor: `${cat.color}18` }]}>
+                  <MaterialIcons name={cat.icon} size={22} color={cat.color} />
+                </View>
+                <Text style={[styles.catCardTitle, { color: colors.text }]}>{cat.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      ) : (
+        /* ========================================== */
+        /* PANEL 2: MY SESSION BOOKINGS (TICKETS LIST)*/
+        /* ========================================== */
+        <View style={{ flex: 1 }}>
+          {/* Modern Floating Pill Tab Selector */}
+          <View style={styles.tabsOuterWrapper}>
+            <View
+              style={[
+                styles.tabsContainer,
+                {
+                  backgroundColor: isDark ? '#1E1E1E' : '#EEF2F6',
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              {TABS.map((tab) => {
+                const isSelected = selectedTab === tab;
+                const count =
+                  tab === 'Upcoming'
+                    ? upcomingCount
+                    : tab === 'Completed'
+                    ? completedCount
+                    : cancelledCount;
+
+                return (
+                  <TouchableOpacity
+                    key={tab}
+                    onPress={() => setSelectedTab(tab)}
+                    style={[
+                      styles.tabPill,
+                      {
+                        backgroundColor: isSelected
+                          ? isDark
+                            ? '#2D3748'
+                            : '#FFFFFF'
+                          : 'transparent',
+                        shadowOpacity: isSelected ? (isDark ? 0.3 : 0.06) : 0,
+                      },
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[
+                        styles.tabPillText,
+                        {
+                          color: isSelected
+                            ? isDark
+                              ? '#FFFFFF'
+                              : AppColors.primaryColor
+                            : colors.subtitle,
+                          fontWeight: isSelected ? '800' : '600',
+                        },
+                      ]}
+                    >
+                      {tab} ({count})
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* List of Digital Booking Tickets */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.passesScrollContent}
+          >
+            {filteredBookings.length === 0 ? (
+              <View style={styles.emptyStateContainer}>
+                <MaterialIcons name="event-busy" size={54} color={colors.subtitle} />
+                <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
+                  No {selectedTab} Bookings
+                </Text>
+                <Text style={[styles.emptyStateSub, { color: colors.subtitle }]}>
+                  When you book workout sessions, your digital passes will appear here.
+                </Text>
+              </View>
+            ) : (
+              filteredBookings.map((booking) => {
+                const isUpcoming = booking.status === 'Upcoming';
+                const catMeta = getCategoryIcon(booking.type, booking.iconName);
+
+                return (
+                  <TouchableOpacity
+                    key={booking.id}
+                    onPress={() => openBookingDetails(booking)}
+                    activeOpacity={0.88}
+                    style={[
+                      styles.ticketCard,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    {/* Top Header Row */}
+                    <View style={styles.ticketHeaderRow}>
+                      <View style={[styles.categoryIconCapsule, { backgroundColor: catMeta.bg }]}>
+                        <MaterialIcons name={catMeta.name} size={22} color={catMeta.color} />
+                      </View>
+
+                      <View style={{ flex: 1, marginLeft: 12 }}>
+                        <Text style={[styles.ticketGymName, { color: colors.text }]} numberOfLines={1}>
+                          {booking.gymName}
+                        </Text>
+                        <Text style={[styles.ticketSubtitle, { color: colors.subtitle }]}>
+                          {booking.sessionSubtitle}
+                        </Text>
+                      </View>
+
+                      {/* Pass ID Tag Badge on Top Right */}
                       <View
                         style={[
-                          styles.statusBadge,
+                          styles.passIdTag,
                           {
-                            backgroundColor:
-                              booking.status === 'Upcoming'
-                                ? '#E6F7EF'
-                                : booking.status === 'Completed'
-                                ? isDark
-                                  ? '#262626'
-                                  : '#F1F5F9'
-                                : '#FEE2E2',
-                            borderColor:
-                              booking.status === 'Upcoming'
-                                ? '#B7EAD0'
-                                : booking.status === 'Completed'
-                                ? colors.border
-                                : '#FCA5A5',
+                            backgroundColor: isDark ? '#2A2A2A' : '#F1F5F9',
                           },
                         ]}
                       >
                         <Text
                           style={[
-                            styles.statusText,
-                            {
-                              color:
-                                booking.status === 'Upcoming'
-                                  ? '#047857'
-                                  : booking.status === 'Completed'
-                                  ? colors.subtitle
-                                  : '#EF4444',
-                            },
+                            styles.passIdText,
+                            { color: isDark ? '#93C5FD' : AppColors.primaryColor },
                           ]}
                         >
-                          {booking.status.toUpperCase()}
+                          {booking.id}
                         </Text>
                       </View>
                     </View>
 
-                    <Text style={[styles.cardTypeSub, { color: AppColors.primaryNavy }]}>
-                      {booking.sessionSubtitle}
-                    </Text>
-                  </View>
-                </View>
+                    {/* Perforated / Stylized Dotted Divider */}
+                    <View style={styles.dottedDividerRow}>
+                      {Array.from({ length: 24 }).map((_, i) => (
+                        <View
+                          key={i}
+                          style={[
+                            styles.dotSegment,
+                            {
+                              backgroundColor:
+                                i % 2 === 0
+                                  ? isDark
+                                    ? 'rgba(255, 255, 255, 0.15)'
+                                    : '#E2E8F0'
+                                  : 'transparent',
+                            },
+                          ]}
+                        />
+                      ))}
+                    </View>
 
-                {/* Date & Time Strip */}
-                <View
-                  style={[
-                    styles.cardDateStrip,
-                    {
-                      backgroundColor: isDark ? '#262626' : '#F8FAFC',
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <View style={styles.dateCol}>
-                    <Text style={[styles.dateColLabel, { color: colors.subtitle }]}>DATE</Text>
-                    <Text style={[styles.dateColVal, { color: colors.text }]}>
-                      {booking.date}
-                    </Text>
-                  </View>
-                  <View style={[styles.stripDivider, { backgroundColor: colors.border }]} />
-                  <View style={styles.dateCol}>
-                    <Text style={[styles.dateColLabel, { color: colors.subtitle }]}>TIME</Text>
-                    <Text style={[styles.dateColVal, { color: colors.text }]}>
-                      {booking.time}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* OTP & Action Strip */}
-                <View style={styles.cardBottomActions}>
-                  <View style={styles.otpPill}>
-                    <Text style={[styles.otpPrefix, { color: colors.subtitle }]}>OTP: </Text>
-                    <Text style={[styles.otpCode, { color: AppColors.primaryNavy }]}>
-                      {booking.otp}
-                    </Text>
-                  </View>
-
-                  <View style={styles.cardButtonsRow}>
-                    {isUpcoming && (
-                      <>
-                        <TouchableOpacity
-                          onPress={() => {
-                            setSelectedBookingForReschedule(booking);
-                            setRescheduleModalVisible(true);
-                          }}
-                          style={[styles.rescheduleBtn, { borderColor: colors.border }]}
+                    {/* Date & Time Grid Row */}
+                    <View style={styles.dateTimeRow}>
+                      <View style={styles.dateCol}>
+                        <MaterialIcons
+                          name="calendar-today"
+                          size={14}
+                          color={isUpcoming ? AppColors.secondaryColor : colors.subtitle}
+                        />
+                        <Text
+                          style={[styles.dateText, { color: colors.text }]}
+                          numberOfLines={1}
                         >
-                          <Text style={[styles.rescheduleBtnText, { color: colors.text }]}>
-                            Reschedule
-                          </Text>
-                        </TouchableOpacity>
+                          {booking.date}
+                        </Text>
+                      </View>
 
-                        <TouchableOpacity
-                          onPress={() => {
-                            setSelectedBookingForCancel(booking);
-                            setCancelModalVisible(true);
-                          }}
-                          style={styles.cancelLinkBtn}
+                      <View style={styles.timeCol}>
+                        <MaterialIcons name="access-time" size={14} color={colors.subtitle} />
+                        <Text style={[styles.timeText, { color: colors.subtitle }]}>
+                          {booking.time}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Footer Row: Price + "View Pass & OTP" Pill Button */}
+                    <View style={styles.ticketFooterRow}>
+                      <View style={styles.priceRow}>
+                        <Text style={styles.priceAmount}>
+                          ₹{Math.round(booking.amountPaid)}
+                        </Text>
+                        <Text style={[styles.pricePaidLabel, { color: colors.subtitle }]}>
+                          Paid
+                        </Text>
+                      </View>
+
+                      <View
+                        style={[
+                          styles.viewPassPill,
+                          {
+                            backgroundColor: isDark
+                              ? '#262626'
+                              : 'rgba(0, 56, 130, 0.08)',
+                            borderColor: isDark
+                              ? 'rgba(255, 255, 255, 0.12)'
+                              : 'rgba(0, 56, 130, 0.2)',
+                          },
+                        ]}
+                      >
+                        <MaterialIcons
+                          name={isUpcoming ? 'qr-code-scanner' : 'receipt-long'}
+                          size={14}
+                          color={isDark ? '#93C5FD' : AppColors.primaryColor}
+                        />
+                        <Text
+                          style={[
+                            styles.viewPassPillText,
+                            { color: isDark ? '#93C5FD' : AppColors.primaryColor },
+                          ]}
                         >
-                          <Text style={styles.cancelLinkText}>Cancel</Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
+                          {isUpcoming ? 'View Pass & OTP' : 'View Receipt'}
+                        </Text>
+                        <MaterialIcons
+                          name="chevron-right"
+                          size={16}
+                          color={isDark ? '#93C5FD' : AppColors.primaryColor}
+                        />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            )}
 
-                    <TouchableOpacity
-                      onPress={() => navigation.navigate('BookingDetails', { booking })}
-                      style={[
-                        styles.viewPassBtn,
-                        { backgroundColor: AppColors.primaryNavy },
-                      ]}
-                    >
-                      <MaterialIcons name="qr-code" size={16} color="#FFFFFF" />
-                      <Text style={styles.viewPassText}>Digital Pass</Text>
-                    </TouchableOpacity>
-                  </View>
+            {/* Creative Inline "Explore More" Banner Card */}
+            <LinearGradient
+              colors={
+                isDark
+                  ? ['#1E293B', '#0F172A']
+                  : ['#F1F5F9', '#E2E8F0']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.exploreBanner}
+            >
+              <View style={styles.exploreBannerTopRow}>
+                <View style={styles.boltCircle}>
+                  <MaterialIcons name="bolt" size={20} color={AppColors.secondaryColor} />
                 </View>
-              </TouchableOpacity>
-            );
-          })
-        )}
-      </ScrollView>
-
-      {/* Cancel Booking Modal */}
-      <Modal visible={cancelModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalCard,
-              { backgroundColor: colors.card, borderColor: colors.border },
-            ]}
-          >
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Cancel Booking</Text>
-            <Text style={[styles.modalSub, { color: colors.subtitle }]}>
-              Please select a cancellation reason for your refund processing:
-            </Text>
-
-            {CANCEL_REASONS.map((r) => (
-              <TouchableOpacity
-                key={r}
-                onPress={() => setSelectedReason(r)}
-                style={styles.reasonOption}
-              >
-                <View
-                  style={[
-                    styles.radioCircle,
-                    {
-                      borderColor: selectedReason === r ? AppColors.primaryNavy : colors.border,
-                      backgroundColor: selectedReason === r ? AppColors.primaryNavy : 'transparent',
-                    },
-                  ]}
-                >
-                  {selectedReason === r && (
-                    <MaterialIcons name="check" size={12} color="#FFFFFF" />
-                  )}
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={[styles.exploreBannerTitle, { color: colors.text }]}>
+                    Book Your Next Workout
+                  </Text>
+                  <Text style={[styles.exploreBannerSub, { color: colors.subtitle }]}>
+                    Single passes • Zero lock-in contracts
+                  </Text>
                 </View>
-                <Text style={[styles.reasonText, { color: colors.text }]}>{r}</Text>
-              </TouchableOpacity>
-            ))}
+              </View>
 
-            <View style={styles.modalActionsRow}>
-              <TouchableOpacity
-                onPress={() => setCancelModalVisible(false)}
-                style={[styles.modalBackBtn, { borderColor: colors.border }]}
-              >
-                <Text style={{ color: colors.text, fontWeight: '700' }}>Keep Booking</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleConfirmCancel}
-                style={[styles.modalConfirmBtn, { backgroundColor: '#EF4444' }]}
-              >
-                <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Confirm Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+              {/* Quick Action Chips Row */}
+              <View style={styles.quickChipsRow}>
+                {['Gym', 'Yoga', 'Zumba'].map((cat) => (
+                  <TouchableOpacity
+                    key={cat}
+                    onPress={() => bookNewSession(cat)}
+                    style={[
+                      styles.quickChipBtn,
+                      {
+                        backgroundColor: isDark ? '#262626' : '#FFFFFF',
+                        borderColor: colors.border,
+                      },
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.quickChipText, { color: colors.text }]}>
+                      {cat} →
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </LinearGradient>
+          </ScrollView>
         </View>
-      </Modal>
-
-      {/* Reschedule Booking Modal */}
-      <Modal visible={rescheduleModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalCard,
-              { backgroundColor: colors.card, borderColor: colors.border },
-            ]}
-          >
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Reschedule Session</Text>
-            <Text style={[styles.modalSub, { color: colors.subtitle }]}>
-              Choose a new available time slot:
-            </Text>
-
-            {['06:00 AM - 07:00 AM', '07:00 AM - 08:00 AM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM'].map((slot) => (
-              <TouchableOpacity
-                key={slot}
-                onPress={() => setNewTimeSlot(slot)}
-                style={styles.reasonOption}
-              >
-                <View
-                  style={[
-                    styles.radioCircle,
-                    {
-                      borderColor: newTimeSlot === slot ? AppColors.primaryNavy : colors.border,
-                      backgroundColor: newTimeSlot === slot ? AppColors.primaryNavy : 'transparent',
-                    },
-                  ]}
-                >
-                  {newTimeSlot === slot && (
-                    <MaterialIcons name="check" size={12} color="#FFFFFF" />
-                  )}
-                </View>
-                <Text style={[styles.reasonText, { color: colors.text }]}>{slot}</Text>
-              </TouchableOpacity>
-            ))}
-
-            <View style={styles.modalActionsRow}>
-              <TouchableOpacity
-                onPress={() => setRescheduleModalVisible(false)}
-                style={[styles.modalBackBtn, { borderColor: colors.border }]}
-              >
-                <Text style={{ color: colors.text, fontWeight: '700' }}>Close</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleConfirmReschedule}
-                style={[styles.modalConfirmBtn, { backgroundColor: AppColors.secondaryColor }]}
-              >
-                <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Confirm Reschedule</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      )}
     </View>
   );
 };
@@ -412,252 +488,329 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  appBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 10,
+    paddingVertical: 10,
   },
-  title: {
+  appBarTitle: {
     fontSize: 22,
     fontWeight: '900',
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
-  subtitle: {
-    fontSize: 12.5,
-    marginTop: 2,
+  activePassesSub: {
+    color: AppColors.secondaryColor,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 1,
   },
-  tabsWrapper: {
+  bookCtaPillWrapper: {
+    marginRight: 8,
+    borderRadius: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: AppColors.primaryColor,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  bookCtaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  bookCtaText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  hubToggleBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  /* Tabs */
+  tabsOuterWrapper: {
     paddingHorizontal: 16,
-    marginBottom: 12,
+    paddingVertical: 8,
   },
   tabsContainer: {
     flexDirection: 'row',
-    borderRadius: 14,
+    borderRadius: 16,
+    padding: 4,
     borderWidth: 1,
-    padding: 3,
   },
-  tabItem: {
+  tabPill: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 11,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  tabText: {
-    fontSize: 12,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 95,
-  },
-  emptyContainer: {
+    paddingVertical: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 50,
+    borderRadius: 12,
   },
-  emptyTitle: {
-    fontSize: 18,
+  tabPillText: {
+    fontSize: 12.5,
+  },
+
+  /* Passes List */
+  passesScrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 120,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateTitle: {
+    fontSize: 17,
     fontWeight: '800',
     marginTop: 12,
   },
-  emptySub: {
+  emptyStateSub: {
     fontSize: 13,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 6,
     paddingHorizontal: 20,
   },
-  bookingCard: {
-    borderRadius: 20,
+
+  /* Ticket Card */
+  ticketCard: {
+    borderRadius: 22,
     borderWidth: 1,
-    padding: 16,
+    padding: 18,
     marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 14,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  cardHeaderRow: {
+  ticketHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  gymThumb: {
-    width: 48,
-    height: 48,
+  categoryIconCapsule: {
+    width: 42,
+    height: 42,
     borderRadius: 14,
-  },
-  cardHeaderTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  cardGymName: {
-    fontSize: 15,
-    fontWeight: '800',
-    flex: 1,
-    marginRight: 8,
+  ticketGymName: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    borderWidth: 0.8,
-  },
-  statusText: {
-    fontSize: 9.5,
-    fontWeight: '900',
-    letterSpacing: 0.4,
-  },
-  cardTypeSub: {
+  ticketSubtitle: {
     fontSize: 12,
-    fontWeight: '700',
-    marginTop: 3,
+    marginTop: 2,
   },
-  cardDateStrip: {
+  passIdTag: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  passIdText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+
+  /* Dotted Line Divider */
+  dottedDividerRow: {
     flexDirection: 'row',
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginTop: 12,
     alignItems: 'center',
+    marginVertical: 14,
+  },
+  dotSegment: {
+    flex: 1,
+    height: 1.2,
+  },
+
+  /* Date & Time */
+  dateTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   dateCol: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 8,
   },
-  dateColLabel: {
-    fontSize: 9.5,
-    fontWeight: '700',
+  dateText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    marginLeft: 6,
   },
-  dateColVal: {
+  timeCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timeText: {
     fontSize: 12,
-    fontWeight: '700',
-    marginTop: 1,
+    marginLeft: 6,
   },
-  stripDivider: {
-    width: 1,
-    height: 20,
-    marginHorizontal: 8,
-  },
-  cardBottomActions: {
+
+  /* Footer */
+  ticketFooterRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 12,
-    paddingTop: 10,
-    borderTopWidth: 0.8,
-    borderTopColor: 'rgba(148, 163, 184, 0.2)',
+    marginTop: 14,
   },
-  otpPill: {
+  priceRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
   },
-  otpPrefix: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  otpCode: {
-    fontSize: 14,
+  priceAmount: {
+    fontSize: 18,
     fontWeight: '900',
-    letterSpacing: 1,
+    color: AppColors.secondaryColor,
   },
-  cardButtonsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  rescheduleBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: 1,
-    marginRight: 8,
-  },
-  rescheduleBtnText: {
+  pricePaidLabel: {
     fontSize: 11,
-    fontWeight: '700',
+    marginLeft: 6,
   },
-  cancelLinkBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginRight: 8,
-  },
-  cancelLinkText: {
-    color: '#EF4444',
-    fontSize: 11.5,
-    fontWeight: '700',
-  },
-  viewPassBtn: {
+  viewPassPill: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
   },
-  viewPassText: {
-    color: '#FFFFFF',
-    fontSize: 11.5,
-    fontWeight: '800',
-    marginLeft: 4,
+  viewPassPillText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginHorizontal: 4,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+
+  /* Explore Banner */
+  exploreBanner: {
+    borderRadius: 24,
     padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  modalSub: {
-    fontSize: 12.5,
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  reasonOption: {
+  exploreBannerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
   },
-  radioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
+  boltCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 191, 98, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
   },
-  reasonText: {
-    fontSize: 13.5,
-    fontWeight: '600',
+  exploreBannerTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
   },
-  modalActionsRow: {
+  exploreBannerSub: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  quickChipsRow: {
     flexDirection: 'row',
-    marginTop: 18,
+    gap: 8,
+    marginTop: 14,
   },
-  modalBackBtn: {
+  quickChipBtn: {
     flex: 1,
-    height: 46,
-    borderRadius: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
   },
-  modalConfirmBtn: {
-    flex: 1.3,
+  quickChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  /* Hub Styles */
+  hubScrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 120,
+  },
+  hubSectionHeading: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  hubCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 22,
+    borderWidth: 1,
+  },
+  hubIconCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hubCardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  hubCardSub: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  hubSubheading: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 22,
+    marginBottom: 12,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  categoryCard: {
+    width: (SCREEN_WIDTH - 42) / 2,
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  catIconBox: {
+    width: 46,
     height: 46,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 8,
+  },
+  catCardTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
   },
 });

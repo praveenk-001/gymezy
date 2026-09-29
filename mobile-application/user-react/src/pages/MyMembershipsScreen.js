@@ -8,96 +8,166 @@ import {
   Image,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Clipboard from 'expo-clipboard';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
-import { AppColors } from '../theme/appTheme';
+import { AppColors, AppTheme } from '../theme/appTheme';
 import { useBookingRepository } from '../data/BookingContext';
+import { useToast } from '../widgets/CustomScaffoldMessage';
+import { MockData } from '../data/mockData';
+
+const TABS = ['Active', 'Completed', 'Cancelled'];
 
 export const MyMembershipsScreen = ({ navigation }) => {
   const { isDark, colors } = useTheme();
   const { memberships } = useBookingRepository();
+  const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('Active'); // 'Active' or 'Expired'
+  const [selectedTab, setSelectedTab] = useState('Active');
 
-  const filteredMemberships = memberships.filter((m) =>
-    activeTab === 'Active' ? m.status === 'Active' : m.status !== 'Active'
-  );
+  const filteredMemberships = memberships.filter((m) => {
+    if (selectedTab === 'Active') {
+      return m.status === 'Active' || m.status === 'Expiring Soon';
+    } else if (selectedTab === 'Completed') {
+      return m.status === 'Completed' || m.status === 'Expired';
+    } else {
+      return m.status === 'Cancelled';
+    }
+  });
+
+  const activeCount = memberships.filter(
+    (m) => m.status === 'Active' || m.status === 'Expiring Soon'
+  ).length;
+  const completedCount = memberships.filter(
+    (m) => m.status === 'Completed' || m.status === 'Expired'
+  ).length;
+  const cancelledCount = memberships.filter((m) => m.status === 'Cancelled').length;
+
+  const copyToClipboard = async (text, label) => {
+    await Clipboard.setStringAsync(text);
+    showToast({
+      message: `${label} copied to clipboard`,
+      isSuccess: true,
+    });
+  };
+
+  const openUpgradeFlow = () => {
+    const defaultGym = MockData.gyms[0];
+    navigation.navigate('BuyMembership', { gym: defaultGym });
+  };
+
+  const primaryNavy = isDark ? '#93C5FD' : AppColors.primaryColor;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>My Memberships</Text>
-        <Text style={[styles.subtitle, { color: colors.subtitle }]}>
-          Manage your long-term multi-gym passes
-        </Text>
+      {/* Top App Bar */}
+      <View style={styles.appBar}>
+        <Text style={[styles.appBarTitle, { color: colors.text }]}>My Memberships</Text>
+        <TouchableOpacity style={styles.notifBtn} activeOpacity={0.7}>
+          <MaterialIcons name="notifications-none" size={24} color={colors.text} />
+          <View style={styles.notifRedDot} />
+        </TouchableOpacity>
       </View>
 
-      {/* Tabs */}
-      <View style={styles.tabsWrapper}>
-        <View
-          style={[
-            styles.tabsContainer,
-            {
-              backgroundColor: isDark ? '#1E1E1E' : '#F1F5F9',
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          {['Active', 'Expired / Past'].map((tab) => {
-            const isSelected =
-              (tab === 'Active' && activeTab === 'Active') ||
-              (tab !== 'Active' && activeTab !== 'Active');
-            return (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveTab(tab === 'Active' ? 'Active' : 'Expired')}
-                style={[
-                  styles.tabItem,
-                  {
-                    backgroundColor: isSelected
-                      ? isDark
-                        ? '#262626'
-                        : '#FFFFFF'
-                      : 'transparent',
-                    shadowOpacity: isSelected ? 0.06 : 0,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    {
-                      color: isSelected
-                        ? isDark
-                          ? '#FFFFFF'
-                          : AppColors.primaryNavy
-                        : colors.subtitle,
-                      fontWeight: isSelected ? '800' : '600',
-                    },
-                  ]}
-                >
-                  {tab}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* List */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* 1. Upgrade Promo Banner */}
+        <LinearGradient
+          colors={['#1E1B4B', '#312E81', '#4338CA']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.promoBanner}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={styles.promoSub}>Upgrade Your Fitness Journey</Text>
+            <Text style={styles.promoTitle}>Upgrade Membership</Text>
+            <Text style={styles.promoDesc}>Unlock more benefits and achieve your goals</Text>
+
+            <TouchableOpacity
+              onPress={openUpgradeFlow}
+              style={styles.promoBtn}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.promoBtnText}>View Plans</Text>
+              <MaterialIcons name="arrow-forward" size={16} color="#1E1B4B" style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.promoIconBadge}>
+            <MaterialIcons name="workspace-premium" size={36} color="#FBBF24" />
+          </View>
+        </LinearGradient>
+
+        {/* 2. Filter Tabs */}
+        <View style={styles.tabsWrapper}>
+          <View
+            style={[
+              styles.tabsContainer,
+              {
+                backgroundColor: isDark ? '#1E1E1E' : '#F1F5F9',
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            {TABS.map((tab) => {
+              const isSelected = selectedTab === tab;
+              const count =
+                tab === 'Active'
+                  ? activeCount
+                  : tab === 'Completed'
+                  ? completedCount
+                  : cancelledCount;
+
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  onPress={() => setSelectedTab(tab)}
+                  style={[
+                    styles.tabItem,
+                    {
+                      backgroundColor: isSelected
+                        ? isDark
+                          ? '#262626'
+                          : '#FFFFFF'
+                        : 'transparent',
+                    },
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      {
+                        color: isSelected
+                          ? isDark
+                            ? '#FFFFFF'
+                            : AppColors.primaryColor
+                          : colors.subtitle,
+                        fontWeight: isSelected ? '800' : '600',
+                      },
+                    ]}
+                  >
+                    {tab} ({count})
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* 3. Memberships List */}
         {filteredMemberships.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <MaterialIcons name="card-membership" size={50} color={colors.subtitle} />
+            <MaterialIcons name="card-membership" size={54} color={colors.subtitle} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              No {activeTab} Memberships
+              No {selectedTab} Memberships
             </Text>
             <Text style={[styles.emptySub, { color: colors.subtitle }]}>
-              Your gym memberships will show up here with active validity passes.
+              Your long-term membership passes will appear here.
             </Text>
           </View>
         ) : (
@@ -118,42 +188,82 @@ export const MyMembershipsScreen = ({ navigation }) => {
               >
                 {/* Header Row */}
                 <View style={styles.cardHeaderRow}>
-                  <Image source={{ uri: mbr.gymImageUrl }} style={styles.gymThumb} />
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <View style={styles.cardHeaderTop}>
-                      <Text style={[styles.cardGymName, { color: colors.text }]} numberOfLines={1}>
-                        {mbr.gymName}
-                      </Text>
+                  <Image source={{ uri: mbr.gymImageUrl }} style={styles.gymAvatar} />
+                  <View style={{ flex: 1, marginLeft: 14 }}>
+                    <Text style={[styles.cardGymName, { color: colors.text }]} numberOfLines={1}>
+                      {mbr.gymName}
+                    </Text>
+
+                    <View style={styles.cardBadgesRow}>
                       <View
                         style={[
-                          styles.statusBadge,
+                          styles.planTag,
                           {
-                            backgroundColor: isActive ? '#E6F7EF' : isDark ? '#262626' : '#F1F5F9',
-                            borderColor: isActive ? '#B7EAD0' : colors.border,
+                            backgroundColor: isDark
+                              ? 'rgba(30, 58, 138, 0.6)'
+                              : AppColors.primaryColor,
                           },
                         ]}
                       >
                         <Text
                           style={[
-                            styles.statusText,
-                            { color: isActive ? '#047857' : colors.subtitle },
+                            styles.planTagText,
+                            { color: isDark ? '#93C5FD' : '#FFFFFF' },
                           ]}
                         >
-                          {mbr.status.toUpperCase()}
+                          {mbr.planName}
+                        </Text>
+                      </View>
+
+                      <View
+                        style={[
+                          styles.statusTag,
+                          {
+                            backgroundColor: isActive
+                              ? '#E6F7EF'
+                              : isDark
+                              ? '#262626'
+                              : '#F1F5F9',
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusTagText,
+                            {
+                              color: isActive ? '#16A34A' : colors.subtitle,
+                            },
+                          ]}
+                        >
+                          {mbr.status}
                         </Text>
                       </View>
                     </View>
-
-                    <Text style={[styles.planNameText, { color: AppColors.primaryNavy }]}>
-                      {mbr.planName}
-                    </Text>
                   </View>
                 </View>
 
-                {/* Validity Strip */}
+                {/* Membership ID Row */}
+                <View style={styles.idRow}>
+                  <Text style={[styles.idLabel, { color: colors.subtitle }]}>Membership ID</Text>
+                  <TouchableOpacity
+                    onPress={() => copyToClipboard(mbr.id, 'Membership ID')}
+                    style={styles.copyRow}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.idVal, { color: primaryNavy }]}>{mbr.id}</Text>
+                    <MaterialIcons
+                      name="content-copy"
+                      size={13}
+                      color={primaryNavy}
+                      style={{ marginLeft: 4 }}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Validity Dual Box */}
                 <View
                   style={[
-                    styles.validityStrip,
+                    styles.validityBox,
                     {
                       backgroundColor: isDark ? '#262626' : '#F8FAFC',
                       borderColor: colors.border,
@@ -161,65 +271,66 @@ export const MyMembershipsScreen = ({ navigation }) => {
                   ]}
                 >
                   <View style={styles.valCol}>
-                    <Text style={[styles.valLabel, { color: colors.subtitle }]}>START DATE</Text>
-                    <Text style={[styles.valText, { color: colors.text }]}>{mbr.startDate}</Text>
+                    <Text style={[styles.valLabel, { color: colors.subtitle }]}>VALID FROM</Text>
+                    <Text style={[styles.valDate, { color: colors.text }]}>{mbr.startDate}</Text>
                   </View>
 
                   <View style={[styles.valDivider, { backgroundColor: colors.border }]} />
 
                   <View style={styles.valCol}>
-                    <Text style={[styles.valLabel, { color: colors.subtitle }]}>EXPIRY DATE</Text>
-                    <Text style={[styles.valText, { color: colors.text }]}>{mbr.endDate}</Text>
+                    <Text style={[styles.valLabel, { color: colors.subtitle }]}>EXPIRES ON</Text>
+                    <Text style={[styles.valDate, { color: colors.text }]}>{mbr.endDate}</Text>
                   </View>
                 </View>
 
-                {/* Duration Days Left Bar */}
+                {/* Progress Bar (if Active) */}
                 {isActive && (
-                  <View style={styles.durationBarWrapper}>
-                    <View style={styles.durationHeader}>
-                      <Text style={[styles.durationLabel, { color: colors.subtitle }]}>
-                        Validity Remaining:
+                  <View style={styles.progressSection}>
+                    <View style={styles.progressLabelRow}>
+                      <Text style={[styles.progressLabel, { color: colors.subtitle }]}>
+                        Days Remaining
                       </Text>
-                      <Text style={[styles.durationVal, { color: AppColors.secondaryColor }]}>
-                        {mbr.durationDays}
-                      </Text>
+                      <Text style={styles.progressVal}>{mbr.durationDays}</Text>
                     </View>
                     <View
                       style={[
                         styles.progressTrack,
-                        { backgroundColor: isDark ? '#262626' : '#E2E8F0' },
+                        { backgroundColor: isDark ? '#334155' : '#E2E8F0' },
                       ]}
                     >
                       <View
                         style={[
                           styles.progressFill,
-                          { backgroundColor: AppColors.secondaryColor, width: '75%' },
+                          {
+                            backgroundColor: AppColors.secondaryColor,
+                            width: '70%',
+                          },
                         ]}
                       />
                     </View>
                   </View>
                 )}
 
-                {/* Bottom Row */}
-                <View style={styles.cardBottomRow}>
+                {/* Footer / CTA Row */}
+                <View style={styles.cardFooterRow}>
                   <View>
                     <Text style={[styles.paidLabel, { color: colors.subtitle }]}>Amount Paid</Text>
-                    <Text style={[styles.paidVal, { color: colors.text }]}>
-                      ₹{mbr.amountPaid.toFixed(0)}
+                    <Text style={[styles.paidAmount, { color: colors.text }]}>
+                      ₹{Math.round(mbr.amountPaid)}
                     </Text>
                   </View>
 
                   <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate('MembershipDetails', { membership: mbr })
-                    }
+                    onPress={() => navigation.navigate('MembershipDetails', { membership: mbr })}
                     style={[
                       styles.viewPassBtn,
-                      { backgroundColor: AppColors.primaryNavy },
+                      { backgroundColor: AppColors.primaryColor },
                     ]}
+                    activeOpacity={0.85}
                   >
                     <MaterialIcons name="qr-code" size={16} color="#FFFFFF" />
-                    <Text style={styles.viewPassText}>Membership Pass</Text>
+                    <Text style={styles.viewPassBtnText}>View Pass & Details</Text>
+                    <MaterialIcons name="chevron-right" size={18} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
               </TouchableOpacity>
@@ -235,118 +346,223 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  appBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 10,
+    paddingVertical: 10,
   },
-  title: {
+  appBarTitle: {
     fontSize: 22,
     fontWeight: '900',
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
-  subtitle: {
-    fontSize: 12.5,
+  notifBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  notifRedDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 120,
+  },
+
+  /* Upgrade Promo Banner */
+  promoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#312E81',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  promoSub: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  promoTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
     marginTop: 2,
   },
+  promoDesc: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 3,
+  },
+  promoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginTop: 12,
+  },
+  promoBtnText: {
+    color: '#1E1B4B',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  promoIconBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+  },
+
+  /* Filter Tabs */
   tabsWrapper: {
-    paddingHorizontal: 16,
+    marginTop: 18,
     marginBottom: 12,
   },
   tabsContainer: {
     flexDirection: 'row',
-    borderRadius: 14,
+    borderRadius: 16,
+    padding: 4,
     borderWidth: 1,
-    padding: 3,
   },
   tabItem: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 11,
+    paddingVertical: 10,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 1,
+    justifyContent: 'center',
+    borderRadius: 12,
   },
   tabText: {
-    fontSize: 12,
+    fontSize: 13,
   },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 95,
-  },
+
+  /* Empty State */
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 50,
+    paddingVertical: 60,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     marginTop: 12,
   },
   emptySub: {
     fontSize: 13,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 6,
     paddingHorizontal: 20,
   },
+
+  /* Membership Card */
   membershipCard: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 22,
+    borderWidth: 1.2,
     padding: 16,
     marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  gymThumb: {
-    width: 48,
-    height: 48,
+  gymAvatar: {
+    width: 52,
+    height: 52,
     borderRadius: 14,
   },
-  cardHeaderTop: {
+  cardGymName: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  cardBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  planTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  planTagText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  statusTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    marginLeft: 6,
+  },
+  statusTagText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  idRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  cardGymName: {
-    fontSize: 15,
-    fontWeight: '800',
-    flex: 1,
-    marginRight: 8,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    borderWidth: 0.8,
-  },
-  statusText: {
-    fontSize: 9.5,
-    fontWeight: '900',
-    letterSpacing: 0.4,
-  },
-  planNameText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    marginTop: 3,
-  },
-  validityStrip: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
     marginTop: 12,
+    paddingTop: 8,
+    borderTopWidth: 0.6,
+    borderTopColor: '#E2E8F0',
+  },
+  idLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  copyRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+  },
+  idVal: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  validityBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+    marginTop: 10,
   },
   valCol: {
     flex: 1,
@@ -354,35 +570,37 @@ const styles = StyleSheet.create({
   valLabel: {
     fontSize: 9.5,
     fontWeight: '700',
+    letterSpacing: 0.5,
   },
-  valText: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: 1,
+  valDate: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    marginTop: 2,
   },
   valDivider: {
     width: 1,
-    height: 20,
-    marginHorizontal: 8,
+    height: 24,
+    marginHorizontal: 12,
   },
-  durationBarWrapper: {
+  progressSection: {
     marginTop: 12,
   },
-  durationHeader: {
+  progressLabelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 5,
   },
-  durationLabel: {
+  progressLabel: {
     fontSize: 11,
     fontWeight: '600',
   },
-  durationVal: {
+  progressVal: {
     fontSize: 11,
     fontWeight: '800',
+    color: AppColors.secondaryColor,
   },
   progressTrack: {
-    height: 5,
+    height: 6,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -390,33 +608,34 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
   },
-  cardBottomRow: {
+  cardFooterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 14,
     paddingTop: 10,
-    borderTopWidth: 0.8,
-    borderTopColor: 'rgba(148, 163, 184, 0.2)',
+    borderTopWidth: 0.6,
+    borderTopColor: '#E2E8F0',
   },
   paidLabel: {
     fontSize: 10.5,
   },
-  paidVal: {
+  paidAmount: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '900',
+    marginTop: 1,
   },
   viewPassBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 12,
   },
-  viewPassText: {
+  viewPassBtnText: {
     color: '#FFFFFF',
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: '800',
-    marginLeft: 4,
+    marginHorizontal: 6,
   },
 });

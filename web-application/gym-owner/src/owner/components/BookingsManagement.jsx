@@ -19,6 +19,7 @@ import {
   Radio,
   Pagination,
   message,
+  Tooltip,
 } from 'antd';
 import {
   PlusOutlined,
@@ -290,20 +291,48 @@ export const BookingsManagement = ({
       title: 'Booking ID',
       dataIndex: 'bookingId',
       key: 'bookingId',
-      render: (text) => (
-        <span style={{ fontWeight: 700, color: isDarkMode ? '#ffffff' : '#0f172a', fontSize: 13 }}>
-          {text}
-        </span>
+      render: (text, record) => (
+        <Tooltip title="Click to view booking details">
+          <span
+            onClick={() => handleView(record)}
+            style={{
+              fontWeight: 700,
+              color: '#1677ff',
+              fontSize: 13,
+              cursor: 'pointer',
+              textDecoration: 'none',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+          >
+            {text}
+          </span>
+        </Tooltip>
       ),
     },
     {
       title: 'Customer ID',
       dataIndex: 'customerId',
       key: 'customerId',
-      render: (text) => (
-        <span style={{ color: isDarkMode ? '#888888' : '#64748b', fontSize: 13, fontWeight: 500 }}>
-          {text}
-        </span>
+      render: (text, record) => (
+        <Tooltip title="Click to view customer details">
+          <span
+            onClick={() => handleView(record)}
+            style={{
+              color: '#722ed1',
+              fontSize: 13,
+              fontWeight: 650,
+              cursor: 'pointer',
+              fontFamily: 'var(--font-mono, monospace)',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+          >
+            {text}
+          </span>
+        </Tooltip>
       ),
     },
     {
@@ -312,13 +341,8 @@ export const BookingsManagement = ({
       render: (_, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Avatar src={record.avatar} size={38} style={{ flexShrink: 0 }} />
-          <div>
-            <div style={{ fontWeight: 650, color: isDarkMode ? '#ffffff' : '#0f172a', fontSize: 13 }}>
-              {record.customerName}
-            </div>
-            <div style={{ fontSize: 11, color: isDarkMode ? '#888888' : '#64748b', marginTop: 1 }}>
-              {record.phone}
-            </div>
+          <div style={{ fontWeight: 650, color: isDarkMode ? '#ffffff' : '#0f172a', fontSize: 13 }}>
+            {record.customerName}
           </div>
         </div>
       ),

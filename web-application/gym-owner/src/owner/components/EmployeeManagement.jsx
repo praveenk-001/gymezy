@@ -54,6 +54,7 @@ import {
   UsergroupAddOutlined,
   ShopOutlined,
   InfoCircleOutlined,
+  PaperClipOutlined,
 } from '@ant-design/icons';
 import confetti from 'canvas-confetti';
 import { useTheme } from '../../theme/ThemeContext';
@@ -232,6 +233,7 @@ export const EmployeeManagement = ({
   const [addEmployeeForm] = Form.useForm();
   const [editEmployeeForm] = Form.useForm();
   const [tempStaffForm] = Form.useForm();
+  const [attachDocForm] = Form.useForm();
 
   // Data & Filters
   const [employeesList, setEmployeesList] = useState(initialData);
@@ -248,6 +250,9 @@ export const EmployeeManagement = ({
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
+  const [isAttachDocModalOpen, setIsAttachDocModalOpen] = useState(false);
+  const [targetDocSection, setTargetDocSection] = useState('personal'); // 'personal' | 'employment' | 'trainer'
+  const [docFile, setDocFile] = useState(null);
 
   // Selected Records & Form Aux States
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -267,6 +272,62 @@ export const EmployeeManagement = ({
   const [trainerCerts, setTrainerCerts] = useState([
     { key: '1', certType: 'Personal Trainer Certificate', certNum: 'PTC987654', fileName: 'pt_certificate.pdf', addedOn: '21 Jul 2025' },
   ]);
+
+  // Document Attachment Handlers
+  const openAttachDocModal = (section = 'personal') => {
+    setTargetDocSection(section);
+    setDocFile(null);
+    attachDocForm.resetFields();
+    let defaultType = 'Aadhaar Card';
+    if (section === 'employment') defaultType = 'Experience Letter';
+    if (section === 'trainer') defaultType = 'Personal Trainer Certificate';
+    attachDocForm.setFieldsValue({
+      docType: defaultType,
+      docNum: '',
+    });
+    setIsAttachDocModalOpen(true);
+  };
+
+  const handleAttachDocSubmit = (values) => {
+    const fileName = docFile?.name || `${values.docType.toLowerCase().replace(/[^a-z0-9]+/g, '_')}.pdf`;
+    const addedOn = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    if (targetDocSection === 'personal') {
+      const newDoc = {
+        key: `pdoc-${Date.now()}`,
+        docType: values.docType,
+        docNum: values.docNum || '---',
+        fileName: fileName,
+        addedOn: addedOn,
+      };
+      setPersonalDocs((prev) => [...prev, newDoc]);
+      message.success(`${values.docType} attached successfully!`);
+    } else if (targetDocSection === 'employment') {
+      const newDoc = {
+        key: `edoc-${Date.now()}`,
+        docType: values.docType,
+        docNum: values.docNum || '---',
+        fileName: fileName,
+        addedOn: addedOn,
+      };
+      setEmpDocs((prev) => [...prev, newDoc]);
+      message.success(`${values.docType} attached to Employment Documents!`);
+    } else if (targetDocSection === 'trainer') {
+      const newDoc = {
+        key: `tcert-${Date.now()}`,
+        certType: values.docType,
+        certNum: values.docNum || '---',
+        fileName: fileName,
+        addedOn: addedOn,
+      };
+      setTrainerCerts((prev) => [...prev, newDoc]);
+      message.success(`${values.docType} attached to Trainer Certificates!`);
+    }
+
+    setIsAttachDocModalOpen(false);
+    setDocFile(null);
+    attachDocForm.resetFields();
+  };
 
   // Temp Staff Form States
   const [tempStaffPhoto, setTempStaffPhoto] = useState(null);
@@ -1611,18 +1672,44 @@ export const EmployeeManagement = ({
                 </Row>
 
                 {/* Added Employment Documents Table */}
-                <div style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: isDarkMode ? '#cccccc' : '#475569', marginBottom: 6 }}>
-                    Added Employment Documents
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: isDarkMode ? '#cccccc' : '#475569' }}>
+                      Added Employment Documents
+                    </div>
+                    <Button
+                      size="small"
+                      type="dashed"
+                      icon={<PaperClipOutlined />}
+                      onClick={() => openAttachDocModal('employment')}
+                      style={{
+                        borderRadius: 'var(--radius-base)',
+                        fontWeight: 600,
+                        fontSize: 11.5,
+                        color: '#722ed1',
+                        borderColor: '#722ed1',
+                      }}
+                    >
+                      Attach Document
+                    </Button>
                   </div>
                   <Table
                     size="small"
                     pagination={false}
                     dataSource={empDocs}
                     columns={[
-                      { title: 'Document Type', dataIndex: 'docType', key: 'docType' },
-                      { title: 'Document Number', dataIndex: 'docNum', key: 'docNum' },
-                      { title: 'File Name', dataIndex: 'fileName', key: 'fileName' },
+                      { title: 'Document Type', dataIndex: 'docType', key: 'docType', render: (t) => <span style={{ fontWeight: 600 }}>{t}</span> },
+                      { title: 'Document Number', dataIndex: 'docNum', key: 'docNum', render: (n) => <span style={{ fontFamily: 'monospace' }}>{n}</span> },
+                      {
+                        title: 'File Name',
+                        dataIndex: 'fileName',
+                        key: 'fileName',
+                        render: (f) => (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#1677ff', cursor: 'pointer' }} onClick={() => message.info(`Viewing ${f}`)}>
+                            <FilePdfOutlined style={{ color: '#ef4444' }} /> {f}
+                          </span>
+                        ),
+                      },
                       { title: 'Added On', dataIndex: 'addedOn', key: 'addedOn' },
                       {
                         title: 'Action',
@@ -1693,8 +1780,26 @@ export const EmployeeManagement = ({
 
               {/* Documents Section */}
               <div style={{ borderTop: `1px solid ${isDarkMode ? '#222222' : '#f1f5f9'}`, paddingTop: 14, marginTop: 8 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#722ed1', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                  <IdcardOutlined /> Documents
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#722ed1', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <IdcardOutlined /> Documents
+                  </div>
+                  <Button
+                    size="small"
+                    type="primary"
+                    ghost
+                    icon={<PaperClipOutlined />}
+                    onClick={() => openAttachDocModal('personal')}
+                    style={{
+                      borderRadius: 'var(--radius-base)',
+                      fontWeight: 600,
+                      fontSize: 12,
+                      borderColor: '#722ed1',
+                      color: '#722ed1',
+                    }}
+                  >
+                    Attach Document
+                  </Button>
                 </div>
 
                 <Table
@@ -1702,9 +1807,18 @@ export const EmployeeManagement = ({
                   pagination={false}
                   dataSource={personalDocs}
                   columns={[
-                    { title: 'Document Type', dataIndex: 'docType', key: 'docType' },
-                    { title: 'Document Number', dataIndex: 'docNum', key: 'docNum' },
-                    { title: 'File Name', dataIndex: 'fileName', key: 'fileName' },
+                    { title: 'Document Type', dataIndex: 'docType', key: 'docType', render: (t) => <span style={{ fontWeight: 600 }}>{t}</span> },
+                    { title: 'Document Number', dataIndex: 'docNum', key: 'docNum', render: (n) => <span style={{ fontFamily: 'monospace' }}>{n}</span> },
+                    {
+                      title: 'File Name',
+                      dataIndex: 'fileName',
+                      key: 'fileName',
+                      render: (f) => (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#1677ff', cursor: 'pointer' }} onClick={() => message.info(`Viewing ${f}`)}>
+                          <FilePdfOutlined style={{ color: '#ef4444' }} /> {f}
+                        </span>
+                      ),
+                    },
                     { title: 'Added On', dataIndex: 'addedOn', key: 'addedOn' },
                     {
                       title: 'Action',
@@ -1725,8 +1839,26 @@ export const EmployeeManagement = ({
 
               {/* Trainer Certificate (If Employee is a Trainer) */}
               <div style={{ borderTop: `1px solid ${isDarkMode ? '#222222' : '#f1f5f9'}`, paddingTop: 14, marginTop: 14 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#722ed1', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                  <CrownOutlined /> Trainer Certificate (If Employee is a Trainer)
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#722ed1', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CrownOutlined /> Trainer Certificate (If Employee is a Trainer)
+                  </div>
+                  <Button
+                    size="small"
+                    type="primary"
+                    ghost
+                    icon={<PaperClipOutlined />}
+                    onClick={() => openAttachDocModal('trainer')}
+                    style={{
+                      borderRadius: 'var(--radius-base)',
+                      fontWeight: 600,
+                      fontSize: 12,
+                      borderColor: '#722ed1',
+                      color: '#722ed1',
+                    }}
+                  >
+                    Attach Certificate
+                  </Button>
                 </div>
 
                 <Table
@@ -1734,9 +1866,18 @@ export const EmployeeManagement = ({
                   pagination={false}
                   dataSource={trainerCerts}
                   columns={[
-                    { title: 'Certificate Type', dataIndex: 'certType', key: 'certType' },
-                    { title: 'Document Number', dataIndex: 'certNum', key: 'certNum' },
-                    { title: 'File Name', dataIndex: 'fileName', key: 'fileName' },
+                    { title: 'Certificate Type', dataIndex: 'certType', key: 'certType', render: (t) => <span style={{ fontWeight: 600 }}>{t}</span> },
+                    { title: 'Document Number', dataIndex: 'certNum', key: 'certNum', render: (n) => <span style={{ fontFamily: 'monospace' }}>{n}</span> },
+                    {
+                      title: 'File Name',
+                      dataIndex: 'fileName',
+                      key: 'fileName',
+                      render: (f) => (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#1677ff', cursor: 'pointer' }} onClick={() => message.info(`Viewing ${f}`)}>
+                          <FilePdfOutlined style={{ color: '#ef4444' }} /> {f}
+                        </span>
+                      ),
+                    },
                     { title: 'Added On', dataIndex: 'addedOn', key: 'addedOn' },
                     {
                       title: 'Action',
@@ -1783,6 +1924,161 @@ export const EmployeeManagement = ({
               </div>
             </div>
           )}
+        </Form>
+      </Modal>
+
+      {/* ATTACH DOCUMENT MODAL */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 700, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
+            <PaperClipOutlined style={{ color: '#722ed1' }} />
+            <span>
+              {targetDocSection === 'personal'
+                ? 'Attach Personal Document'
+                : targetDocSection === 'employment'
+                ? 'Attach Employment Document'
+                : 'Attach Trainer Certificate'}
+            </span>
+          </div>
+        }
+        open={isAttachDocModalOpen}
+        onCancel={() => {
+          setIsAttachDocModalOpen(false);
+          setDocFile(null);
+          attachDocForm.resetFields();
+        }}
+        footer={null}
+        width={500}
+        centered
+        destroyOnClose
+      >
+        <Form form={attachDocForm} layout="vertical" onFinish={handleAttachDocSubmit} style={{ marginTop: 16 }}>
+          <Form.Item
+            label={<span style={{ fontWeight: 600, fontSize: 13 }}>Document / Certificate Type <span style={{ color: '#ef4444' }}>*</span></span>}
+            name="docType"
+            rules={[{ required: true, message: 'Please select or enter document type' }]}
+          >
+            {targetDocSection === 'personal' ? (
+              <Select style={{ height: 40 }} placeholder="Select document type">
+                <Option value="Aadhaar Card">Aadhaar Card</Option>
+                <Option value="PAN Card">PAN Card</Option>
+                <Option value="Driving License">Driving License</Option>
+                <Option value="Passport">Passport</Option>
+                <Option value="Address Proof">Address Proof</Option>
+                <Option value="Voter ID Card">Voter ID Card</Option>
+                <Option value="Bank Passbook">Bank Passbook</Option>
+                <Option value="Other">Other</Option>
+              </Select>
+            ) : targetDocSection === 'employment' ? (
+              <Select style={{ height: 40 }} placeholder="Select document type">
+                <Option value="Experience Letter">Experience Letter</Option>
+                <Option value="Relieving Letter">Relieving Letter</Option>
+                <Option value="Salary Slip">Salary Slip</Option>
+                <Option value="Appointment Letter">Appointment Letter</Option>
+                <Option value="Other">Other</Option>
+              </Select>
+            ) : (
+              <Select style={{ height: 40 }} placeholder="Select certificate type">
+                <Option value="Personal Trainer Certificate">Personal Trainer Certificate</Option>
+                <Option value="CPR / First Aid Certificate">CPR / First Aid Certificate</Option>
+                <Option value="Certified Strength & Conditioning Specialist (CSCS)">Certified Strength & Conditioning Specialist (CSCS)</Option>
+                <Option value="Yoga Teacher Training (YTT)">Yoga Teacher Training (YTT)</Option>
+                <Option value="CrossFit Level 1 Coach">CrossFit Level 1 Coach</Option>
+                <Option value="Sports Nutrition Certification">Sports Nutrition Certification</Option>
+                <Option value="Other">Other</Option>
+              </Select>
+            )}
+          </Form.Item>
+
+          <Form.Item
+            label={<span style={{ fontWeight: 600, fontSize: 13 }}>Document / ID Number</span>}
+            name="docNum"
+          >
+            <Input placeholder="e.g. XXXX XXXX 1234 or PTC987654" style={{ height: 40, borderRadius: 'var(--radius-base)' }} />
+          </Form.Item>
+
+          {/* File Upload Trigger */}
+          <Form.Item
+            label={<span style={{ fontWeight: 600, fontSize: 13 }}>Upload File</span>}
+            style={{ marginBottom: 24 }}
+          >
+            <div
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.pdf,.png,.jpg,.jpeg,.doc,.docx';
+                input.onchange = (e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setDocFile(file);
+                    message.success(`Selected file: ${file.name}`);
+                  }
+                };
+                input.click();
+              }}
+              style={{
+                border: `2px dashed ${docFile ? '#52c41a' : isDarkMode ? '#333333' : '#d0d7de'}`,
+                backgroundColor: isDarkMode ? '#141414' : '#fafafa',
+                borderRadius: 'var(--radius-base)',
+                padding: '20px 16px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {docFile ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                  <FilePdfOutlined style={{ fontSize: 24, color: '#ef4444' }} />
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
+                      {docFile.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: isDarkMode ? '#888888' : '#64748b' }}>
+                      {(docFile.size / 1024).toFixed(1)} KB • Click to change file
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <UploadOutlined style={{ fontSize: 26, color: '#722ed1', marginBottom: 8 }} />
+                  <div style={{ fontWeight: 600, fontSize: 13, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
+                    Click to browse or drop file here
+                  </div>
+                  <div style={{ fontSize: 11, color: isDarkMode ? '#888888' : '#64748b', marginTop: 4 }}>
+                    Supports PDF, PNG, JPG, DOCX (Max 10MB)
+                  </div>
+                </>
+              )}
+            </div>
+          </Form.Item>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <Button
+              onClick={() => {
+                setIsAttachDocModalOpen(false);
+                setDocFile(null);
+                attachDocForm.resetFields();
+              }}
+              style={{ borderRadius: 'var(--radius-base)', height: 38 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              icon={<PaperClipOutlined />}
+              style={{
+                borderRadius: 'var(--radius-base)',
+                height: 38,
+                backgroundColor: '#722ed1',
+                borderColor: '#722ed1',
+                color: '#ffffff',
+                fontWeight: 600,
+              }}
+            >
+              Attach Document
+            </Button>
+          </div>
         </Form>
       </Modal>
 

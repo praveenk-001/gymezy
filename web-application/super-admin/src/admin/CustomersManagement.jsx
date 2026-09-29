@@ -35,6 +35,7 @@ import {
   DollarOutlined,
   ClockCircleOutlined,
   RightOutlined,
+  ShopOutlined,
 } from '@ant-design/icons';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -469,6 +470,10 @@ export const CustomersManagement = () => {
     message.success('Customer details updated successfully!');
   };
 
+  // Modal State for Booking & Gym Details
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedGymInfo, setSelectedGymInfo] = useState(null);
+
   // Table Columns for Customer List
   const customerColumns = [
     {
@@ -477,7 +482,10 @@ export const CustomersManagement = () => {
       key: 'name',
       width: 200,
       render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div
+          onClick={() => handleViewCustomer(record)}
+          style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+        >
           <div
             style={{
               width: 36,
@@ -495,7 +503,13 @@ export const CustomersManagement = () => {
           >
             {record.initials}
           </div>
-          <span style={{ fontWeight: 700, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
+          <span
+            style={{
+              fontWeight: 700,
+              color: isDarkMode ? '#818cf8' : '#4338ca',
+              transition: 'all 0.15s ease',
+            }}
+          >
             {record.name}
           </span>
         </div>
@@ -505,9 +519,18 @@ export const CustomersManagement = () => {
       title: 'Customer ID',
       dataIndex: 'customerId',
       key: 'customerId',
-      width: 130,
-      render: (text) => (
-        <span style={{ fontWeight: 700, color: '#4f46e5', letterSpacing: '0.2px' }}>
+      width: 140,
+      render: (text, record) => (
+        <span
+          onClick={() => handleViewCustomer(record)}
+          style={{
+            fontWeight: 700,
+            color: '#4f46e5',
+            letterSpacing: '0.2px',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+          }}
+        >
           {text}
         </span>
       ),
@@ -616,8 +639,16 @@ export const CustomersManagement = () => {
       dataIndex: 'bookingId',
       key: 'bookingId',
       width: 140,
-      render: (text) => (
-        <span style={{ fontWeight: 700, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
+      render: (text, record) => (
+        <span
+          onClick={() => setSelectedBooking(record)}
+          style={{
+            fontWeight: 700,
+            color: '#4f46e5',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+          }}
+        >
           {text}
         </span>
       ),
@@ -628,7 +659,15 @@ export const CustomersManagement = () => {
       key: 'gymName',
       width: 180,
       render: (text) => (
-        <span style={{ fontWeight: 600, color: isDarkMode ? '#e2e8f0' : '#1e293b' }}>
+        <span
+          onClick={() => setSelectedGymInfo({ name: text, location: 'Anna Nagar, Chennai' })}
+          style={{
+            fontWeight: 600,
+            color: isDarkMode ? '#818cf8' : '#4338ca',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+          }}
+        >
           {text}
         </span>
       ),
@@ -1380,6 +1419,73 @@ export const CustomersManagement = () => {
             </Button>
           </div>
         </Form>
+      </Modal>
+
+      {/* QUICK BOOKING DETAILS MODAL */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CalendarOutlined style={{ color: '#4338ca' }} />
+            <span>Booking Details — {selectedBooking?.bookingId}</span>
+          </div>
+        }
+        open={Boolean(selectedBooking)}
+        onCancel={() => setSelectedBooking(null)}
+        footer={[
+          <Button key="close" onClick={() => setSelectedBooking(null)}>
+            Close
+          </Button>,
+        ]}
+        centered
+      >
+        {selectedBooking && (
+          <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ padding: '12px', background: isDarkMode ? '#1e293b' : '#f8fafc', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: '#888' }}>Gym Partner</div>
+              <div style={{ fontWeight: 800, fontSize: 16 }}>{selectedBooking.gymName}</div>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Schedule: {selectedBooking.bookingDateTime}</div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 13 }}>
+              <div><span style={{ color: '#888' }}>Booking Type:</span> <strong>{selectedBooking.type}</strong></div>
+              <div><span style={{ color: '#888' }}>Amount:</span> <strong>₹ {selectedBooking.amount}</strong></div>
+              <div><span style={{ color: '#888' }}>Status:</span> <Tag color={selectedBooking.status === 'Completed' ? 'success' : 'orange'}>{selectedBooking.status}</Tag></div>
+              <div><span style={{ color: '#888' }}>Access Pass:</span> <Tag color="blue">Dynamic QR Active</Tag></div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* QUICK GYM INFO MODAL */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ShopOutlined style={{ color: '#4338ca' }} />
+            <span>Gym Partner — {selectedGymInfo?.name}</span>
+          </div>
+        }
+        open={Boolean(selectedGymInfo)}
+        onCancel={() => setSelectedGymInfo(null)}
+        footer={[
+          <Button key="close" onClick={() => setSelectedGymInfo(null)}>
+            Close
+          </Button>,
+        ]}
+        centered
+      >
+        {selectedGymInfo && (
+          <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ padding: '12px', background: isDarkMode ? '#1e293b' : '#f8fafc', borderRadius: 8 }}>
+              <div style={{ fontWeight: 800, fontSize: 16 }}>{selectedGymInfo.name}</div>
+              <div style={{ fontSize: 12, color: '#64748b' }}>{selectedGymInfo.location || 'Anna Nagar, Chennai'}</div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 13 }}>
+              <div><span style={{ color: '#888' }}>Status:</span> <Tag color="success">Approved & Live</Tag></div>
+              <div><span style={{ color: '#888' }}>Drop-in Rate:</span> <strong>₹ 199 / session</strong></div>
+              <div><span style={{ color: '#888' }}>Facilities:</span> <span>AC, Lockers, Showers, Parking</span></div>
+              <div><span style={{ color: '#888' }}>Rating:</span> <span>⭐ 4.8 (Verified)</span></div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

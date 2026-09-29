@@ -170,6 +170,24 @@ export const BookingProvider = ({ children }) => {
     setMemberships((prev) => [item, ...prev]);
   };
 
+  const updateMembership = (updated) => {
+    setMemberships((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+  };
+
+  const cancelMembership = (membershipId, reason) => {
+    setMemberships((prev) =>
+      prev.map((m) =>
+        m.id === membershipId
+          ? {
+              ...m,
+              status: 'Cancelled',
+              cancellationReason: reason,
+            }
+          : m
+      )
+    );
+  };
+
   return (
     <BookingContext.Provider
       value={{
@@ -179,6 +197,8 @@ export const BookingProvider = ({ children }) => {
         updateBooking,
         cancelBooking,
         addMembership,
+        updateMembership,
+        cancelMembership,
       }}
     >
       {children}

@@ -718,3 +718,37 @@ html.dark .ant-btn-default:hover {
 [data-theme='dark'] .ant-table-thead > tr > th.ant-table-cell-fix-left {
   background-color: #1f1f1f !important;
 }
+
+/* ==========================================================================
+   SAFARI / WEBKIT PASSWORD INPUT BULLET RENDERING FIX
+   ========================================================================== */
+input[type="password"],
+.ant-input-password input,
+.ant-input-affix-wrapper input[type="password"] {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  letter-spacing: normal !important;
+  font-variant-ligatures: normal !important;
+}
+
+input[type="password"]::-webkit-textfield-decoration-container {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* ==========================================================================
+   REACTIVE TABLE HYPERLINKS
+   ========================================================================== */
+.table-hyperlink {
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.table-hyperlink:hover {
+  color: #4338ca !important;
+  opacity: 0.85;
+}
+
+html.dark .table-hyperlink:hover {
+  color: #a5b4fc !important;
+}

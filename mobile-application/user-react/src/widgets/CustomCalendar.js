@@ -8,7 +8,7 @@ import {
   Modal,
   Platform,
 } from 'react-native';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { AppColors } from '../theme/appTheme';
 
@@ -27,125 +27,12 @@ const MONTH_NAMES = [
   'December',
 ];
 
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const GRID_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export const GRID_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export const HorizontalDayStripCalendar = ({
-  selectedDate,
-  onDateSelected,
-  daysCount = 14,
-  initialStartDate,
-  showMonthHeader = true,
-  customHeaderTitle,
-  padding = 16,
-  wrapInCard = true,
-}) => {
-  const { isDark, colors } = useTheme();
-  const baseStart = initialStartDate || new Date();
-  const primaryNavy = isDark ? '#2563EB' : AppColors.primaryNavy;
-
-  const currentMonth = selectedDate ? selectedDate.getMonth() : baseStart.getMonth();
-  const currentYear = selectedDate ? selectedDate.getFullYear() : baseStart.getFullYear();
-  const headerText = customHeaderTitle || `${MONTH_NAMES[currentMonth]} ${currentYear}`;
-
-  const days = Array.from({ length: daysCount }).map((_, index) => {
-    const d = new Date(baseStart);
-    d.setDate(baseStart.getDate() + index);
-    return d;
-  });
-
-  const content = (
-    <View>
-      {showMonthHeader && (
-        <Text style={[styles.headerTitle, { color: colors.text }]}>{headerText}</Text>
-      )}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.stripScroll}
-      >
-        {days.map((date, index) => {
-          const isSelected =
-            selectedDate &&
-            selectedDate.getFullYear() === date.getFullYear() &&
-            selectedDate.getMonth() === date.getMonth() &&
-            selectedDate.getDate() === date.getDate();
-
-          // 0 is Sunday in JS, convert to Mon-Sun
-          const dayIdx = date.getDay() === 0 ? 6 : date.getDay() - 1;
-          const weekdayLabel = WEEKDAYS[dayIdx];
-
-          return (
-            <TouchableOpacity
-              key={index}
-              activeOpacity={0.7}
-              onPress={() => onDateSelected(date)}
-              style={[
-                styles.dayNode,
-                {
-                  backgroundColor: isSelected
-                    ? primaryNavy
-                    : isDark
-                    ? '#262626'
-                    : '#F1F5F9',
-                  borderColor: isSelected
-                    ? primaryNavy
-                    : isDark
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : '#E2E8F0',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.dayLabel,
-                  {
-                    color: isSelected
-                      ? 'rgba(255, 255, 255, 0.9)'
-                      : colors.subtitle,
-                    fontWeight: isSelected ? '600' : '500',
-                  },
-                ]}
-              >
-                {weekdayLabel}
-              </Text>
-              <Text
-                style={[
-                  styles.dayNumber,
-                  {
-                    color: isSelected ? '#FFFFFF' : colors.text,
-                  },
-                ]}
-              >
-                {date.getDate()}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
-
-  if (wrapInCard) {
-    return (
-      <View
-        style={[
-          styles.cardWrapper,
-          {
-            backgroundColor: colors.card,
-            borderColor: colors.border,
-            padding,
-          },
-        ]}
-      >
-        {content}
-      </View>
-    );
-  }
-
-  return content;
-};
-
+/**
+ * MonthlyGridCalendar matches the 1:1 UI design with circular day nodes,
+ * Month + Year header with dropdown chevron, navigation chevrons, and navy selected states.
+ */
 export const MonthlyGridCalendar = ({
   selectedDate,
   multiSelectedDates,
@@ -153,10 +40,11 @@ export const MonthlyGridCalendar = ({
   onDateToggled,
   startDate,
   minDate,
-  maxMonthsAhead = 3,
+  maxMonthsAhead = 12,
   showMonthHeader = true,
-  padding = 16,
+  padding = 20,
   wrapInCard = true,
+  style,
 }) => {
   const { isDark, colors } = useTheme();
   const today = new Date();
@@ -203,7 +91,7 @@ export const MonthlyGridCalendar = ({
   // Build grid
   const year = currentMonthDate.getFullYear();
   const month = currentMonthDate.getMonth();
-  const firstDayIndex = new Date(year, month, 1).getDay(); // 0 is Sun
+  const firstDayIndex = new Date(year, month, 1).getDay(); // 0 is Sunday
   const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
   const totalGridCells = firstDayIndex + totalDaysInMonth;
 
@@ -215,65 +103,97 @@ export const MonthlyGridCalendar = ({
     cur.setMonth(cur.getMonth() + 1);
   }
 
-  const primaryNavy = isDark ? '#2563EB' : AppColors.primaryNavy;
+  const primaryNavy = isDark ? '#2563EB' : AppColors.primaryNavy || '#003882';
 
   const content = (
-    <View>
+    <View style={style}>
       {showMonthHeader && (
         <View style={styles.gridHeaderRow}>
+          {/* Month + Year title with Dropdown Chevron */}
           <TouchableOpacity
             onPress={() => setShowMonthPicker(true)}
             style={styles.monthSelectBtn}
             activeOpacity={0.7}
           >
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
+            <Text
+              style={[
+                styles.headerTitle,
+                { color: isDark ? '#FFFFFF' : '#0F172A' },
+              ]}
+            >
               {`${MONTH_NAMES[month]} ${year}`}
             </Text>
-            <MaterialIcons
-              name="keyboard-arrow-down"
-              size={20}
-              color={colors.subtitle}
-              style={{ marginLeft: 4 }}
+            <Ionicons
+              name="chevron-down"
+              size={18}
+              color={isDark ? '#94A3B8' : '#334155'}
+              style={{ marginLeft: 6, marginTop: 1 }}
             />
           </TouchableOpacity>
 
+          {/* Navigation Chevrons */}
           <View style={styles.navArrowsRow}>
             <TouchableOpacity
               onPress={handlePreviousMonth}
               disabled={!canGoPrevious}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={styles.arrowBtn}
             >
-              <MaterialIcons
-                name="chevron-left"
-                size={24}
-                color={canGoPrevious ? colors.text : 'rgba(148, 163, 184, 0.3)'}
+              <Ionicons
+                name="chevron-back"
+                size={22}
+                color={
+                  canGoPrevious
+                    ? isDark
+                      ? '#FFFFFF'
+                      : '#0F172A'
+                    : isDark
+                    ? '#475569'
+                    : '#CBD5E1'
+                }
               />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleNextMonth}
               disabled={!canGoNext}
-              style={styles.arrowBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={[styles.arrowBtn, { marginLeft: 16 }]}
             >
-              <MaterialIcons
-                name="chevron-right"
-                size={24}
-                color={canGoNext ? colors.text : 'rgba(148, 163, 184, 0.3)'}
+              <Ionicons
+                name="chevron-forward"
+                size={22}
+                color={
+                  canGoNext
+                    ? isDark
+                      ? '#FFFFFF'
+                      : '#0F172A'
+                    : isDark
+                    ? '#475569'
+                    : '#CBD5E1'
+                }
               />
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* Weekday headers */}
+      {/* Weekday headers: Sun, Mon, Tue, Wed, Thu, Fri, Sat */}
       <View style={styles.weekdayRow}>
         {GRID_WEEKDAYS.map((w, idx) => (
           <View key={idx} style={styles.weekdayCell}>
-            <Text style={[styles.weekdayText, { color: colors.subtitle }]}>{w}</Text>
+            <Text
+              style={[
+                styles.weekdayText,
+                { color: isDark ? '#94A3B8' : '#5A6E85' },
+              ]}
+            >
+              {w}
+            </Text>
           </View>
         ))}
       </View>
 
-      {/* Grid cells */}
+      {/* Days Grid */}
       <View style={styles.gridContainer}>
         {Array.from({ length: totalGridCells }).map((_, index) => {
           if (index < firstDayIndex) {
@@ -282,7 +202,13 @@ export const MonthlyGridCalendar = ({
 
           const dayNumber = index - firstDayIndex + 1;
           const cellDate = new Date(year, month, dayNumber);
-          const isPast = cellDate < effectiveMin;
+          const isPast =
+            cellDate <
+            new Date(
+              effectiveMin.getFullYear(),
+              effectiveMin.getMonth(),
+              effectiveMin.getDate()
+            );
 
           const isSelected = multiSelectedDates
             ? multiSelectedDates.some(
@@ -300,6 +226,7 @@ export const MonthlyGridCalendar = ({
             <TouchableOpacity
               key={`day-${dayNumber}`}
               disabled={isPast}
+              activeOpacity={0.7}
               onPress={() => {
                 if (onDateSelected) onDateSelected(cellDate);
                 if (onDateToggled) onDateToggled(cellDate);
@@ -313,17 +240,18 @@ export const MonthlyGridCalendar = ({
                     backgroundColor: isSelected
                       ? primaryNavy
                       : isDark
-                      ? '#262626'
-                      : '#F8FAFC',
+                      ? '#1E293B'
+                      : '#F1F5F9',
                     borderColor: isSelected
                       ? primaryNavy
                       : isDark
                       ? isPast
                         ? 'transparent'
-                        : 'rgba(255, 255, 255, 0.12)'
+                        : '#334155'
                       : isPast
-                      ? 'rgba(226, 232, 240, 0.4)'
+                      ? '#E2E8F0'
                       : '#DCE5F2',
+                    opacity: isPast ? 0.45 : 1,
                   },
                 ]}
               >
@@ -334,11 +262,13 @@ export const MonthlyGridCalendar = ({
                       color: isSelected
                         ? '#FFFFFF'
                         : isPast
-                        ? 'rgba(148, 163, 184, 0.35)'
+                        ? isDark
+                          ? '#64748B'
+                          : '#94A3B8'
                         : isDark
-                        ? '#FFFFFF'
-                        : AppColors.primaryNavy,
-                      fontWeight: isSelected ? '800' : '600',
+                        ? '#E2E8F0'
+                        : '#8292A6',
+                      fontWeight: isSelected ? '700' : '600',
                     },
                   ]}
                 >
@@ -350,7 +280,7 @@ export const MonthlyGridCalendar = ({
         })}
       </View>
 
-      {/* Month picker modal */}
+      {/* Month picker Modal */}
       <Modal visible={showMonthPicker} transparent animationType="fade">
         <TouchableOpacity
           style={styles.modalBackdrop}
@@ -360,56 +290,72 @@ export const MonthlyGridCalendar = ({
           <View
             style={[
               styles.monthPickerCard,
-              { backgroundColor: colors.card, borderColor: colors.border },
+              {
+                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                borderColor: isDark ? '#334155' : '#E2E8F0',
+              },
             ]}
           >
-            <Text style={[styles.pickerTitle, { color: colors.text }]}>
+            <Text
+              style={[
+                styles.pickerTitle,
+                { color: isDark ? '#FFFFFF' : '#0F172A' },
+              ]}
+            >
               Choose Month
             </Text>
-            {availableMonths.map((m, idx) => {
-              const isCur =
-                m.getFullYear() === currentMonthDate.getFullYear() &&
-                m.getMonth() === currentMonthDate.getMonth();
+            <ScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
+              {availableMonths.map((m, idx) => {
+                const isCur =
+                  m.getFullYear() === currentMonthDate.getFullYear() &&
+                  m.getMonth() === currentMonthDate.getMonth();
 
-              return (
-                <TouchableOpacity
-                  key={idx}
-                  onPress={() => {
-                    setCurrentMonthDate(m);
-                    setShowMonthPicker(false);
-                  }}
-                  style={[
-                    styles.monthItem,
-                    {
-                      backgroundColor: isCur
-                        ? isDark
-                          ? '#262626'
-                          : '#F1F5F9'
-                        : 'transparent',
-                    },
-                  ]}
-                >
-                  <Text
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    onPress={() => {
+                      setCurrentMonthDate(m);
+                      setShowMonthPicker(false);
+                    }}
                     style={[
-                      styles.monthItemText,
+                      styles.monthItem,
                       {
-                        color: isCur ? AppColors.primaryNavy : colors.text,
-                        fontWeight: isCur ? '700' : '500',
+                        backgroundColor: isCur
+                          ? isDark
+                            ? '#003882'
+                            : '#EFF6FF'
+                          : 'transparent',
                       },
                     ]}
                   >
-                    {`${MONTH_NAMES[m.getMonth()]} ${m.getFullYear()}`}
-                  </Text>
-                  {isCur && (
-                    <MaterialIcons
-                      name="check-circle"
-                      size={20}
-                      color={AppColors.primaryNavy}
-                    />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+                    <Text
+                      style={[
+                        styles.monthItemText,
+                        {
+                          color: isCur
+                            ? isDark
+                              ? '#FFFFFF'
+                              : primaryNavy
+                            : isDark
+                            ? '#E2E8F0'
+                            : '#334155',
+                          fontWeight: isCur ? '700' : '500',
+                        },
+                      ]}
+                    >
+                      {`${MONTH_NAMES[m.getMonth()]} ${m.getFullYear()}`}
+                    </Text>
+                    {isCur && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={20}
+                        color={isDark ? '#FFFFFF' : primaryNavy}
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -422,8 +368,8 @@ export const MonthlyGridCalendar = ({
         style={[
           styles.cardWrapper,
           {
-            backgroundColor: colors.card,
-            borderColor: colors.border,
+            backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+            borderColor: isDark ? '#334155' : '#E2E8F0',
             padding,
           },
         ]}
@@ -436,48 +382,43 @@ export const MonthlyGridCalendar = ({
   return content;
 };
 
+// Aliases for clean universal usage
+export const CustomCalendar = MonthlyGridCalendar;
+export default MonthlyGridCalendar;
+
 const styles = StyleSheet.create({
   cardWrapper: {
     borderRadius: 24,
-    borderWidth: 1.2,
-    marginVertical: 6,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  stripScroll: {
-    paddingTop: 14,
-    flexDirection: 'row',
-  },
-  dayNode: {
-    width: 58,
-    height: 82,
-    borderRadius: 20,
-    borderWidth: 1.2,
-    marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayLabel: {
-    fontSize: 13,
-  },
-  dayNumber: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginTop: 5,
+    borderWidth: 1,
+    marginVertical: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
   gridHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 20,
+    paddingHorizontal: 4,
   },
   monthSelectBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 4,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
   navArrowsRow: {
     flexDirection: 'row',
@@ -485,18 +426,17 @@ const styles = StyleSheet.create({
   },
   arrowBtn: {
     padding: 4,
-    marginLeft: 4,
   },
   weekdayRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 16,
   },
   weekdayCell: {
     flex: 1,
     alignItems: 'center',
   },
   weekdayText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
   gridContainer: {
@@ -513,13 +453,13 @@ const styles = StyleSheet.create({
   circleNode: {
     width: '100%',
     height: '100%',
-    borderRadius: 22,
-    borderWidth: 1.2,
+    borderRadius: 999,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   nodeNumber: {
-    fontSize: 14,
+    fontSize: 15,
   },
   modalBackdrop: {
     flex: 1,
@@ -533,17 +473,17 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   pickerTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   monthItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     marginBottom: 6,
   },
   monthItemText: {

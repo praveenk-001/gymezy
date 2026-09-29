@@ -740,3 +740,18 @@ html.dark .ant-table-wrapper .ant-table-tbody > tr:hover > td.ant-table-cell-fix
   overflow: hidden;
   border-radius: var(--radius-base);
 }
+
+/* ==========================================================================
+   SAFARI / WEBKIT PASSWORD INPUT BULLET RENDERING FIX
+   ========================================================================== */
+input[type="password"],
+.ant-input-password input,
+.ant-input-affix-wrapper input[type="password"] {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  letter-spacing: normal !important;
+  font-variant-ligatures: normal !important;
+}
+
+input[type="password"]::-webkit-textfield-decoration-container {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}

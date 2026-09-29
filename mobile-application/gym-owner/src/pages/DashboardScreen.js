@@ -1,0 +1,70 @@
+import React, { useState } from 'react';
+import { View, StyleSheet, StatusBar, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../theme/ThemeContext';
+import { AppColors } from '../theme/appTheme';
+import { CustomFloatingNavBar } from '../widgets/CustomFloatingNavBar';
+import { OverviewTab } from './tabs/OverviewTab';
+import { MembersTab } from './tabs/MembersTab';
+import { AnalyticsTab } from './tabs/AnalyticsTab';
+import { SettingsTab } from './tabs/SettingsTab';
+
+export const DashboardScreen = ({ navigation }) => {
+  const { isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [currentTab, setCurrentTab] = useState(0);
+
+  const topInset = Math.max(
+    insets.top,
+    Platform.OS === 'android' ? (StatusBar.currentHeight || 36) : 44
+  );
+
+  return (
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground },
+      ]}
+    >
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        translucent
+        backgroundColor="transparent"
+      />
+
+      <View style={styles.tabContentContainer}>
+        {currentTab === 0 && (
+          <OverviewTab
+            topInset={topInset}
+            navigation={navigation}
+            onNavigateToMembers={() => setCurrentTab(1)}
+          />
+        )}
+        {currentTab === 1 && <MembersTab topInset={topInset} />}
+        {currentTab === 2 && <AnalyticsTab topInset={topInset} />}
+        {currentTab === 3 && (
+          <SettingsTab
+            topInset={topInset}
+            navigation={navigation}
+          />
+        )}
+      </View>
+
+      {/* Floating Bottom Navigation Bar with Smooth Physics Animations */}
+      <CustomFloatingNavBar
+        currentIndex={currentTab}
+        onTap={(index) => setCurrentTab(index)}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  tabContentContainer: {
+    flex: 1,
+  },
+});
+

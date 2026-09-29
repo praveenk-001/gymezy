@@ -349,6 +349,7 @@ export const TransactionsManagement = () => {
             fontWeight: 700,
             color: '#4f46e5',
             cursor: 'pointer',
+            textDecoration: 'underline',
           }}
         >
           {text}
@@ -363,7 +364,12 @@ export const TransactionsManagement = () => {
       render: (name, record) => (
         <span
           onClick={() => handleView(record)}
-          style={{ fontWeight: 600, color: isDarkMode ? '#ffffff' : '#0f172a', cursor: 'pointer' }}
+          style={{
+            fontWeight: 700,
+            color: isDarkMode ? '#818cf8' : '#4338ca',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+          }}
         >
           {name}
         </span>
@@ -377,7 +383,12 @@ export const TransactionsManagement = () => {
       render: (id, record) => (
         <span
           onClick={() => handleView(record)}
-          style={{ fontWeight: 700, color: '#4f46e5', cursor: 'pointer' }}
+          style={{
+            fontWeight: 700,
+            color: '#4f46e5',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+          }}
         >
           {id}
         </span>

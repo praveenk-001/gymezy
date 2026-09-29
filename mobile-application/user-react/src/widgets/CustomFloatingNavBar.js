@@ -41,9 +41,11 @@ export const CustomFloatingNavBar = ({ currentIndex, onTap }) => {
           styles.container,
           {
             backgroundColor: isDark
-              ? 'rgba(30, 30, 30, 0.96)'
-              : 'rgba(255, 255, 255, 0.96)',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+              ? 'rgba(24, 24, 27, 0.88)'
+              : 'rgba(255, 255, 255, 0.88)',
+            borderColor: isDark
+              ? 'rgba(255, 255, 255, 0.12)'
+              : 'rgba(226, 232, 240, 0.85)',
           },
         ]}
       >

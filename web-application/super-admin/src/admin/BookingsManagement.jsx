@@ -32,6 +32,7 @@ import {
   CreditCardOutlined,
   CheckCircleFilled,
   ClockCircleOutlined,
+  ShopOutlined,
 } from '@ant-design/icons';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -289,6 +290,8 @@ export const BookingsManagement = () => {
   // Modal State
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedCustomerModal, setSelectedCustomerModal] = useState(null);
+  const [selectedGymModal, setSelectedGymModal] = useState(null);
 
   // Filtered Bookings List
   const filteredBookings = useMemo(() => {
@@ -350,8 +353,16 @@ export const BookingsManagement = () => {
       dataIndex: 'bookingId',
       key: 'bookingId',
       width: 130,
-      render: (text) => (
-        <span style={{ fontWeight: 700, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
+      render: (text, record) => (
+        <span
+          onClick={() => handleOpenDetails(record)}
+          style={{
+            fontWeight: 700,
+            color: '#4f46e5',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+          }}
+        >
           {text}
         </span>
       ),
@@ -363,6 +374,7 @@ export const BookingsManagement = () => {
       render: (_, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div
+            onClick={() => setSelectedCustomerModal(record.customer)}
             style={{
               width: 32,
               height: 32,
@@ -375,12 +387,22 @@ export const BookingsManagement = () => {
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
+              cursor: 'pointer',
             }}
           >
             {record.customer.initials}
           </div>
           <div>
-            <div style={{ fontWeight: 700, color: isDarkMode ? '#ffffff' : '#0f172a', fontSize: 13 }}>
+            <div
+              onClick={() => setSelectedCustomerModal(record.customer)}
+              style={{
+                fontWeight: 700,
+                color: isDarkMode ? '#818cf8' : '#4338ca',
+                fontSize: 13,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
+            >
               {record.customer.name}
             </div>
             <div style={{ fontSize: 12, color: isDarkMode ? '#888888' : '#64748b' }}>
@@ -396,7 +418,16 @@ export const BookingsManagement = () => {
       width: 190,
       render: (_, record) => (
         <div>
-          <div style={{ fontWeight: 700, color: isDarkMode ? '#ffffff' : '#0f172a', fontSize: 13 }}>
+          <div
+            onClick={() => setSelectedGymModal({ name: record.gymName, location: record.gymLocation })}
+            style={{
+              fontWeight: 700,
+              color: isDarkMode ? '#818cf8' : '#4338ca',
+              fontSize: 13,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
             {record.gymName}
           </div>
           <div style={{ fontSize: 12, color: isDarkMode ? '#888888' : '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -1150,6 +1181,90 @@ export const BookingsManagement = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* QUICK CUSTOMER DETAILS MODAL */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <UserOutlined style={{ color: '#4338ca' }} />
+            <span>Customer Profile — {selectedCustomerModal?.name}</span>
+          </div>
+        }
+        open={Boolean(selectedCustomerModal)}
+        onCancel={() => setSelectedCustomerModal(null)}
+        footer={[
+          <Button key="close" onClick={() => setSelectedCustomerModal(null)}>
+            Close
+          </Button>,
+        ]}
+        centered
+      >
+        {selectedCustomerModal && (
+          <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px', background: isDarkMode ? '#1e293b' : '#f8fafc', borderRadius: 10 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  backgroundColor: selectedCustomerModal.avatarColor || '#f3e8ff',
+                  color: selectedCustomerModal.avatarTextColor || '#7e22ce',
+                  fontWeight: 800,
+                  fontSize: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {selectedCustomerModal.initials}
+              </div>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 16 }}>{selectedCustomerModal.name}</div>
+                <div style={{ fontSize: 12, color: '#64748b' }}>{selectedCustomerModal.phone}</div>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 13 }}>
+              <div><span style={{ color: '#888' }}>Customer Status:</span> <Tag color="success">Active Verified</Tag></div>
+              <div><span style={{ color: '#888' }}>Total Passes Booked:</span> <strong>24 sessions</strong></div>
+              <div><span style={{ color: '#888' }}>Pass Type:</span> <strong>Single Drop-in</strong></div>
+              <div><span style={{ color: '#888' }}>Access Pass:</span> <Tag color="blue">Dynamic QR</Tag></div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* QUICK GYM INFO MODAL */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ShopOutlined style={{ color: '#4338ca' }} />
+            <span>Gym Partner — {selectedGymModal?.name}</span>
+          </div>
+        }
+        open={Boolean(selectedGymModal)}
+        onCancel={() => setSelectedGymModal(null)}
+        footer={[
+          <Button key="close" onClick={() => setSelectedGymModal(null)}>
+            Close
+          </Button>,
+        ]}
+        centered
+      >
+        {selectedGymModal && (
+          <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ padding: '14px', background: isDarkMode ? '#1e293b' : '#f8fafc', borderRadius: 10 }}>
+              <div style={{ fontWeight: 800, fontSize: 16 }}>{selectedGymModal.name}</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{selectedGymModal.location || 'Anna Nagar, Chennai'}</div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 13 }}>
+              <div><span style={{ color: '#888' }}>Approval Status:</span> <Tag color="success">Approved & Live</Tag></div>
+              <div><span style={{ color: '#888' }}>Drop-in Rate:</span> <strong>₹ 199 / session</strong></div>
+              <div><span style={{ color: '#888' }}>Operational Hours:</span> <strong>05:30 AM - 10:30 PM</strong></div>
+              <div><span style={{ color: '#888' }}>Turnstile Check-in:</span> <Tag color="blue">IoT Active</Tag></div>
             </div>
           </div>
         )}

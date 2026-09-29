@@ -1,5 +1,4 @@
-import React from 'react';
-import { View, ActivityIndicator, StatusBar } from 'react-native';
+import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import {
@@ -35,7 +34,7 @@ const MainApp = () => {
 };
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  useFonts({
     Outfit_400Regular,
     Outfit_500Medium,
     Outfit_600SemiBold,
@@ -43,14 +42,6 @@ export default function App() {
     Outfit_800ExtraBold,
     Outfit_900Black,
   });
-
-  if (!fontsLoaded) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#003882', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
-      </View>
-    );
-  }
 
   return (
     <SafeAreaProvider>

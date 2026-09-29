@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Card,
   Row,
@@ -20,6 +20,7 @@ import {
   Popconfirm,
   Badge,
   Tooltip,
+  InputNumber,
 } from 'antd';
 import {
   SearchOutlined,
@@ -46,8 +47,20 @@ import {
   SafetyCertificateOutlined,
   PictureOutlined,
   TeamOutlined,
+  ThunderboltOutlined,
+  FileAddOutlined,
+  UploadOutlined,
+  RocketOutlined,
 } from '@ant-design/icons';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  addGym,
+  approveGym,
+  rejectGym,
+  deleteGym,
+  setGymStatus,
+} from '../redux/slices/gymSlice';
 import { useTheme } from '../theme/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
@@ -269,12 +282,17 @@ const ALL_GYMS_DATA = [
 
 export const GymsManagement = () => {
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTab = searchParams.get('tab') || 'all';
 
+  // Redux Fleet Data
+  const reduxGyms = useSelector((state) => state.gyms?.gyms) || ALL_GYMS_DATA;
+
   // Navigation Views: 'list' | 'review' | 'timing_diff'
   const [currentView, setCurrentView] = useState('list');
-  const [selectedGym, setSelectedGym] = useState(PENDING_APPROVAL_GYMS[0]);
+  const [selectedGym, setSelectedGym] = useState(reduxGyms[0] || ALL_GYMS_DATA[0]);
   const [activeSubTab, setActiveSubTab] = useState('profile');
 
   // Filter States for List View
@@ -288,6 +306,8 @@ export const GymsManagement = () => {
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+  const [quickAddForm] = Form.useForm();
   const [detailsGym, setDetailsGym] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [adminNote, setAdminNote] = useState('');
@@ -295,25 +315,31 @@ export const GymsManagement = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Active dataset depending on active Tab
+  // Active dataset depending on active Tab from Redux
   const activeGymsList = useMemo(() => {
-    if (currentTab === 'pending') return PENDING_APPROVAL_GYMS;
-    if (currentTab === 'approved') return ALL_GYMS_DATA.filter((g) => g.approvalStatus === 'Approved');
-    if (currentTab === 'rejected') return ALL_GYMS_DATA.filter((g) => g.approvalStatus === 'Rejected');
-    if (currentTab === 'on_hold') return ALL_GYMS_DATA.filter((g) => g.approvalStatus === 'On Hold');
-    return ALL_GYMS_DATA;
-  }, [currentTab]);
+    if (currentTab === 'pending') return reduxGyms.filter((g) => g.approvalStatus === 'Pending Approval' || g.status === 'Pending');
+    if (currentTab === 'approved') return reduxGyms.filter((g) => g.approvalStatus === 'Approved');
+    if (currentTab === 'rejected') return reduxGyms.filter((g) => g.approvalStatus === 'Rejected');
+    if (currentTab === 'on_hold') return reduxGyms.filter((g) => g.approvalStatus === 'On Hold');
+    return reduxGyms;
+  }, [currentTab, reduxGyms]);
 
   const filteredGyms = useMemo(() => {
     return activeGymsList.filter((gym) => {
-      const matchName = gym.name.toLowerCase().includes(searchName.toLowerCase());
+      const matchName = (gym.name || '').toLowerCase().includes(searchName.toLowerCase());
       const matchStatus = searchStatus === 'All' || gym.approvalStatus === searchStatus;
       const matchSubType = searchSubscriptionType === 'All' || gym.subscriptionType === searchSubscriptionType;
-      const matchLocation = gym.location.toLowerCase().includes(searchLocation.toLowerCase());
-      const matchPhone = gym.phone.toLowerCase().includes(searchPhone.toLowerCase());
+      const matchLocation = (gym.location || gym.city || '').toLowerCase().includes(searchLocation.toLowerCase());
+      const matchPhone = (gym.phone || '').toLowerCase().includes(searchPhone.toLowerCase());
       return matchName && matchStatus && matchSubType && matchLocation && matchPhone;
     });
   }, [activeGymsList, searchName, searchStatus, searchSubscriptionType, searchLocation, searchPhone]);
+
+  // Reset currentView to 'list' whenever sidebar tab changes
+  useEffect(() => {
+    setCurrentView('list');
+    setCurrentPage(1);
+  }, [currentTab]);
 
   const handleOpenReview = (gym) => {
     setSelectedGym(gym);
@@ -327,19 +353,61 @@ export const GymsManagement = () => {
 
   const handleTabChange = (key) => {
     setSearchParams({ tab: key });
+    setCurrentView('list');
     setCurrentPage(1);
   };
 
   const handleApproveAll = () => {
+    if (selectedGym) {
+      dispatch(approveGym(selectedGym.id));
+      message.success(`Gym "${selectedGym.name}" approved and published to customer app!`);
+    }
     setIsApproveModalOpen(false);
-    message.success(`All 8 changes for "${selectedGym.name}" approved and published to customer app!`);
     setCurrentView('list');
   };
 
   const handleReject = () => {
+    if (selectedGym) {
+      dispatch(rejectGym({ id: selectedGym.id, reason: rejectionReason }));
+      message.warning(`Changes for "${selectedGym.name}" rejected. Reason sent to owner.`);
+    }
     setIsRejectModalOpen(false);
-    message.warning(`Changes for "${selectedGym.name}" rejected. Reason sent to owner.`);
     setCurrentView('list');
+  };
+
+  const handleDeleteGym = (gymId, gymName) => {
+    dispatch(deleteGym(gymId));
+    message.success(`Gym "${gymName}" removed from platform.`);
+  };
+
+  const handleQuickAddSubmit = (values) => {
+    const newGym = {
+      id: `GYM-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: values.name,
+      ownerName: values.ownerName,
+      phone: values.phone.startsWith('+91') ? values.phone : `+91 ${values.phone}`,
+      email: values.email,
+      location: `${values.area || values.city}, ${values.city}`,
+      fullAddress: `${values.area}, ${values.city}`,
+      city: values.city,
+      singleSessionPrice: Number(values.singleSessionPrice) || 199,
+      subscriptionType: values.subscriptionType || 'Hybrid',
+      subscriptionStatus: 'Active',
+      status: 'Active',
+      approvalStatus: 'Approved',
+      image: values.image || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=400&auto=format&fit=crop',
+      facilities: ['AC Gym', 'Locker Facility', 'Shower Available', 'Free Wi-Fi'],
+      amenities: ['RO Drinking Water', 'Towel Service', 'First Aid Kit', 'CCTV 24/7'],
+      workouts: ['GYM', 'Cardio', 'HIIT', 'Yoga'],
+      trainers: [],
+      rules: ['Clean indoor shoes mandatory', 'Towel mandatory on benches'],
+      safety: ['CCTV surveillance', 'Daily equipment sanitization'],
+    };
+
+    dispatch(addGym(newGym));
+    message.success(`New gym "${newGym.name}" onboarded and live on GYMEZY!`);
+    setIsQuickAddModalOpen(false);
+    quickAddForm.resetFields();
   };
 
   // =========================================================================
@@ -547,16 +615,38 @@ export const GymsManagement = () => {
   if (currentView === 'review') {
     return (
       <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-        {/* Top Back Link */}
-        <div style={{ marginBottom: 14 }}>
+        {/* Top Back Link & Switcher */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
           <Button
             type="link"
             icon={<ArrowLeftOutlined />}
             onClick={() => setCurrentView('list')}
-            style={{ padding: 0, fontWeight: 600, color: 'var(--color-primary)' }}
+            style={{ padding: 0, fontWeight: 600, color: 'var(--color-primary)', fontSize: 14 }}
           >
-            Back to Pending Approvals
+            ← Back to Gyms Fleet
           </Button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: isDarkMode ? '#cbd5e1' : '#475569' }}>
+              Switch Pending Gym:
+            </span>
+            <Select
+              value={selectedGym?.id}
+              onChange={(gymId) => {
+                const target = reduxGyms.find((g) => g.id === gymId);
+                if (target) setSelectedGym(target);
+              }}
+              style={{ width: 220 }}
+            >
+              {reduxGyms
+                .filter((g) => g.approvalStatus === 'Pending Approval' || g.status === 'Pending')
+                .map((g) => (
+                  <Option key={g.id} value={g.id}>
+                    {g.name}
+                  </Option>
+                ))}
+            </Select>
+          </div>
         </div>
 
         {/* Gym Header & Action Buttons */}
@@ -1005,22 +1095,79 @@ export const GymsManagement = () => {
         </div>
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => message.info('Opening Partner Onboarding Flow...')}
-            style={{
-              height: 40,
-              padding: '0 18px',
-              borderRadius: 'var(--radius-base)',
-              backgroundColor: '#4338ca',
-              borderColor: '#4338ca',
-              fontWeight: 700,
-              fontSize: 14,
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'full-wizard',
+                  icon: <RocketOutlined style={{ color: '#4338ca' }} />,
+                  label: (
+                    <div style={{ padding: '4px 0' }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: isDarkMode ? '#fff' : '#0f172a' }}>
+                        Full Onboarding Wizard (8 Steps)
+                      </div>
+                      <div style={{ fontSize: 11, color: '#888' }}>
+                        Configure facilities, trainers, pricing, rules & bank setup
+                      </div>
+                    </div>
+                  ),
+                  onClick: () => navigate('/admin/onboarding'),
+                },
+                {
+                  type: 'divider',
+                },
+                {
+                  key: 'quick-add',
+                  icon: <ThunderboltOutlined style={{ color: '#16a34a' }} />,
+                  label: (
+                    <div style={{ padding: '4px 0' }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: isDarkMode ? '#fff' : '#0f172a' }}>
+                        Quick Onboard Partner (1 Min)
+                      </div>
+                      <div style={{ fontSize: 11, color: '#888' }}>
+                        Instant registration modal popup
+                      </div>
+                    </div>
+                  ),
+                  onClick: () => setIsQuickAddModalOpen(true),
+                },
+                {
+                  key: 'bulk-import',
+                  icon: <UploadOutlined style={{ color: '#ea580c' }} />,
+                  label: (
+                    <div style={{ padding: '4px 0' }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: isDarkMode ? '#fff' : '#0f172a' }}>
+                        Bulk Import Gyms (CSV)
+                      </div>
+                      <div style={{ fontSize: 11, color: '#888' }}>
+                        Upload multi-branch gym spreadsheet
+                      </div>
+                    </div>
+                  ),
+                  onClick: () => message.info('Batch CSV Import template ready for upload.'),
+                },
+              ],
             }}
+            trigger={['click']}
+            placement="bottomRight"
           >
-            Add New Gym <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} />
-          </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              style={{
+                height: 40,
+                padding: '0 18px',
+                borderRadius: 'var(--radius-base)',
+                backgroundColor: '#4338ca',
+                borderColor: '#4338ca',
+                fontWeight: 700,
+                fontSize: 14,
+                boxShadow: '0 4px 14px rgba(67, 56, 202, 0.35)',
+              }}
+            >
+              Add New Gym <DownOutlined style={{ fontSize: 10, marginLeft: 6 }} />
+            </Button>
+          </Dropdown>
         </div>
       </div>
 
@@ -1161,10 +1308,19 @@ export const GymsManagement = () => {
                     <img
                       src={record.image}
                       alt={name}
-                      style={{ width: 42, height: 42, borderRadius: 8, objectFit: 'cover' }}
+                      style={{ width: 42, height: 42, borderRadius: 8, objectFit: 'cover', cursor: 'pointer' }}
+                      onClick={() => handleOpenDetails(record)}
                     />
                     <div>
-                      <div style={{ fontWeight: 700, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
+                      <div
+                        onClick={() => handleOpenDetails(record)}
+                        style={{
+                          fontWeight: 700,
+                          color: isDarkMode ? '#818cf8' : '#4338ca',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                        }}
+                      >
                         {name}
                       </div>
                       <div style={{ fontSize: 12, color: isDarkMode ? '#888' : '#64748b' }}>
@@ -1188,8 +1344,18 @@ export const GymsManagement = () => {
                 dataIndex: 'requestedBy',
                 key: 'requestedBy',
                 width: 170,
-                render: (req) => (
-                  <span style={{ fontWeight: 600, color: isDarkMode ? '#e2e8f0' : '#1e293b' }}>{req}</span>
+                render: (req, record) => (
+                  <span
+                    onClick={() => handleOpenDetails(record)}
+                    style={{
+                      fontWeight: 600,
+                      color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    {req}
+                  </span>
                 ),
               },
               {
@@ -1272,10 +1438,19 @@ export const GymsManagement = () => {
                     <img
                       src={record.image}
                       alt={name}
-                      style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }}
+                      style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', cursor: 'pointer' }}
+                      onClick={() => handleOpenDetails(record)}
                     />
                     <div>
-                      <div style={{ fontWeight: 700, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
+                      <div
+                        onClick={() => handleOpenDetails(record)}
+                        style={{
+                          fontWeight: 700,
+                          color: isDarkMode ? '#818cf8' : '#4338ca',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                        }}
+                      >
                         {name}
                       </div>
                       <div style={{ fontSize: 12, color: isDarkMode ? '#888888' : '#64748b' }}>
@@ -1297,7 +1472,19 @@ export const GymsManagement = () => {
                 dataIndex: 'requestedBy',
                 key: 'requestedBy',
                 width: 160,
-                render: (owner) => <span style={{ fontWeight: 600 }}>{owner}</span>,
+                render: (owner, record) => (
+                  <span
+                    onClick={() => handleOpenDetails(record)}
+                    style={{
+                      fontWeight: 600,
+                      color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    {owner}
+                  </span>
+                ),
               },
               {
                 title: 'Approval Status',
@@ -1539,6 +1726,102 @@ export const GymsManagement = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* 7. Fast-Track Quick Add Gym Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <ThunderboltOutlined style={{ color: '#16a34a', fontSize: 20 }} />
+            <span style={{ fontWeight: 800 }}>Quick Onboard Gym Partner</span>
+          </div>
+        }
+        open={isQuickAddModalOpen}
+        onCancel={() => setIsQuickAddModalOpen(false)}
+        footer={null}
+        width={680}
+        destroyOnClose
+      >
+        <div style={{ marginBottom: 16, fontSize: 13, color: isDarkMode ? '#888' : '#64748b' }}>
+          Fast-track register a new gym partner into GYMEZY. You can expand full amenities and trainer rosters later in the 8-step wizard.
+        </div>
+
+        <Form form={quickAddForm} layout="vertical" onFinish={handleQuickAddSubmit}>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item label="Gym / Studio Name" name="name" rules={[{ required: true, message: 'Please enter gym name' }]}>
+                <Input placeholder="e.g. Spartan Strength Club" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Owner Full Name" name="ownerName" rules={[{ required: true, message: 'Please enter owner name' }]}>
+                <Input placeholder="e.g. Vikramaditya Verma" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Owner Mobile Number" name="phone" rules={[{ required: true, message: 'Please enter phone' }]}>
+                <Input addonBefore="+91" placeholder="9876543210" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Official Email" name="email" rules={[{ required: true, type: 'email', message: 'Valid email required' }]}>
+                <Input placeholder="contact@spartanfit.com" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Locality / Area" name="area" rules={[{ required: true, message: 'Area is required' }]}>
+                <Input placeholder="e.g. Koramangala" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="City" name="city" initialValue="Chennai" rules={[{ required: true, message: 'City is required' }]}>
+                <Select>
+                  <Option value="Chennai">Chennai</Option>
+                  <Option value="Bengaluru">Bengaluru</Option>
+                  <Option value="Mumbai">Mumbai</Option>
+                  <Option value="Pune">Pune</Option>
+                  <Option value="Hyderabad">Hyderabad</Option>
+                  <Option value="Delhi-NCR">Delhi-NCR</Option>
+                  <Option value="Kolkata">Kolkata</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Single Session Drop-in Rate (₹)" name="singleSessionPrice" initialValue={199}>
+                <InputNumber prefix="₹" style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Subscription Tier" name="subscriptionType" initialValue="Hybrid">
+                <Select>
+                  <Option value="Hybrid">Hybrid (₹ 4,999/mo) — Full Suite</Option>
+                  <Option value="App Only">App Only (₹ 2,999/mo)</Option>
+                  <Option value="GMS">GMS Only (₹ 1,999/mo)</Option>
+                  <Option value="Listing Only">Listing Only (₹ 999/mo)</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, paddingTop: 16, borderTop: `1px solid ${isDarkMode ? '#222' : '#f1f5f9'}` }}>
+            <Button
+              icon={<RocketOutlined />}
+              onClick={() => {
+                setIsQuickAddModalOpen(false);
+                navigate('/admin/onboarding');
+              }}
+            >
+              Open Full 8-Step Wizard
+            </Button>
+
+            <Space>
+              <Button onClick={() => setIsQuickAddModalOpen(false)}>Cancel</Button>
+              <Button type="primary" htmlType="submit" style={{ backgroundColor: '#4338ca', fontWeight: 700 }}>
+                Quick Publish Gym
+              </Button>
+            </Space>
+          </div>
+        </Form>
       </Modal>
     </div>
   );

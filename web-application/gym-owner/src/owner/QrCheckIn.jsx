@@ -14,6 +14,9 @@ import {
   Segmented,
   Tooltip,
   Divider,
+  Select,
+  Empty,
+  Badge,
 } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -33,6 +36,13 @@ import {
   BarcodeOutlined,
   ArrowRightOutlined,
   CheckOutlined,
+  SearchOutlined,
+  PhoneOutlined,
+  IdcardOutlined,
+  FileTextOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons';
 import confetti from 'canvas-confetti';
 import { useTheme } from '../theme/ThemeContext';
@@ -40,11 +50,97 @@ import { recordCheckIn, recordCheckOut } from '../redux/slices/gymSlice';
 
 const { Title, Text } = Typography;
 
+// Rich searchable database of members and bookings
+const SEARCHABLE_MEMBERS_DB = [
+  {
+    key: 'm-1',
+    name: 'Rahul Verma',
+    phone: '+91 98765 43210',
+    userId: 'USR-1029',
+    membershipId: 'MBR-2024-089',
+    bookingId: 'BKG-78210',
+    plan: 'Annual VIP All-Access Pass',
+    status: 'ACTIVE',
+    planExpiry: '14 Dec 2026',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150&auto=format&fit=crop',
+    gymBranch: 'Anna Nagar, Chennai',
+  },
+  {
+    key: 'm-2',
+    name: 'Sneha Patel',
+    phone: '+91 98412 88990',
+    userId: 'USR-2041',
+    membershipId: 'MBR-2024-042',
+    bookingId: 'BKG-99412',
+    plan: 'Monthly Strength & Cardio',
+    status: 'ACTIVE',
+    planExpiry: '28 Oct 2026',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
+    gymBranch: 'Anna Nagar, Chennai',
+  },
+  {
+    key: 'm-3',
+    name: 'Pooja Sundaram',
+    phone: '+91 91509 55071',
+    userId: 'USR-3304',
+    membershipId: 'WLK-2024-105',
+    bookingId: 'BKG-33019',
+    plan: 'Daily Walk-In Day Pass',
+    status: 'ACTIVE',
+    planExpiry: 'Today (Midnight)',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=150&auto=format&fit=crop',
+    gymBranch: 'Moulivakkam, Chennai',
+  },
+  {
+    key: 'm-4',
+    name: 'Ananya Reddy',
+    phone: '+91 99620 44321',
+    userId: 'USR-4912',
+    membershipId: 'MBR-2024-118',
+    bookingId: 'BKG-11029',
+    plan: 'Quarterly HIIT & Strength',
+    status: 'ACTIVE',
+    planExpiry: '15 Jan 2027',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop',
+    gymBranch: 'Anna Nagar, Chennai',
+  },
+  {
+    key: 'm-5',
+    name: 'Sam Kumar',
+    phone: '+91 97890 12345',
+    userId: 'CUST789012',
+    membershipId: 'MBR-2024-550',
+    bookingId: 'BKG-44580',
+    plan: 'Annual Premium Pass',
+    status: 'ACTIVE',
+    planExpiry: '20 May 2027',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
+    gymBranch: 'Anna Nagar, Chennai',
+  },
+  {
+    key: 'm-6',
+    name: 'Vikram Malhotra',
+    phone: '+91 98409 77654',
+    userId: 'USR-5509',
+    membershipId: 'MBR-2022-310',
+    bookingId: 'BKG-99201',
+    plan: 'Annual VIP Pass (Expired)',
+    status: 'EXPIRED',
+    planExpiry: '13 Sep 2026 (Expired)',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop',
+    gymBranch: 'Anna Nagar, Chennai',
+  },
+];
+
 // Initial sample check-in logs
 const INITIAL_LOGS = [
   {
     key: 'log-1',
     passId: 'MBR-2024-089',
+    userId: 'USR-1029',
+    customerId: 'USR-1029',
+    membershipId: 'MBR-2024-089',
+    bookingId: 'BKG-78210',
     memberName: 'Rahul Verma',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150&auto=format&fit=crop',
     plan: 'Annual VIP Pass',
@@ -57,6 +153,10 @@ const INITIAL_LOGS = [
   {
     key: 'log-2',
     passId: 'MBR-2024-042',
+    userId: 'USR-2041',
+    customerId: 'USR-2041',
+    membershipId: 'MBR-2024-042',
+    bookingId: 'BKG-99412',
     memberName: 'Sneha Patel',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
     plan: 'Monthly Strength & Cardio',
@@ -69,6 +169,10 @@ const INITIAL_LOGS = [
   {
     key: 'log-3',
     passId: 'WLK-2024-105',
+    userId: 'USR-3304',
+    customerId: 'USR-3304',
+    membershipId: 'WLK-2024-105',
+    bookingId: 'BKG-33019',
     memberName: 'Pooja Sundaram',
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=150&auto=format&fit=crop',
     plan: 'Daily Walk-In Day Pass',
@@ -81,6 +185,10 @@ const INITIAL_LOGS = [
   {
     key: 'log-4',
     passId: 'MBR-2022-310',
+    userId: 'USR-5509',
+    customerId: 'USR-5509',
+    membershipId: 'MBR-2022-310',
+    bookingId: 'BKG-99201',
     memberName: 'Vikram Malhotra',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
     plan: 'Annual VIP Pass',
@@ -101,10 +209,14 @@ export const QrCheckIn = () => {
   const [occupancy, setOccupancy] = useState(reduxOccupancy || 42);
   const totalCapacity = reduxCapacity || 120;
   const [logs, setLogs] = useState(INITIAL_LOGS);
-  const [activeOption, setActiveOption] = useState('qr'); // 'qr' | 'otp'
+  const [activeOption, setActiveOption] = useState('qr'); // 'qr' | 'otp' | 'search'
   const [otpInput, setOtpInput] = useState('');
   const [manualInput, setManualInput] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+
+  // Search by Mobile, User ID, Membership ID, Booking ID
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchCategory, setSearchCategory] = useState('all'); // 'all' | 'phone' | 'userId' | 'membershipId' | 'bookingId'
 
   // Live Camera WebRTC State
   const videoRef = useRef(null);
@@ -114,6 +226,10 @@ export const QrCheckIn = () => {
   const [lastVerified, setLastVerified] = useState({
     status: 'GRANTED',
     memberName: 'Rahul Verma',
+    userId: 'USR-1029',
+    customerId: 'USR-1029',
+    membershipId: 'MBR-2024-089',
+    bookingId: 'BKG-78210',
     passId: 'MBR-2024-089',
     plan: 'Annual VIP Pass',
     time: '11:58 AM',
@@ -197,19 +313,23 @@ export const QrCheckIn = () => {
     setTimeout(() => {
       setIsVerifying(false);
 
-      if (customData?.isDenied) {
+      if (customData?.isDenied || customData?.status === 'EXPIRED') {
         const deniedItem = {
           key: `log-${Date.now()}`,
-          passId: customData.passId || 'MBR-DENIED',
-          memberName: customData.memberName || 'Vikram Malhotra',
-          avatar: customData.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
-          plan: customData.plan || 'Annual Pass (Expired)',
+          passId: customData?.membershipId || customData?.passId || 'MBR-DENIED',
+          userId: customData?.userId || 'USR-5509',
+          customerId: customData?.userId || 'USR-5509',
+          membershipId: customData?.membershipId || 'MBR-2022-310',
+          bookingId: customData?.bookingId || 'BKG-99201',
+          memberName: customData?.name || customData?.memberName || 'Vikram Malhotra',
+          avatar: customData?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
+          plan: customData?.plan || 'Annual Pass (Expired)',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          otp: customData.otp || '119284',
+          otp: customData?.otp || '119284',
           status: 'DENIED',
-          denialReason: customData.reason || 'Membership Expired',
-          method: customData.method || (activeOption === 'otp' ? 'OTP Passcode' : 'QR Code'),
-          planExpiry: 'Expired',
+          denialReason: customData?.denialReason || customData?.reason || 'Membership Expired',
+          method: customData?.method || (activeOption === 'search' ? 'Manual Lookup' : activeOption === 'otp' ? 'OTP Passcode' : 'QR Code'),
+          planExpiry: customData?.planExpiry || 'Expired',
         };
 
         setLogs((prev) => [deniedItem, ...prev]);
@@ -218,17 +338,39 @@ export const QrCheckIn = () => {
         return;
       }
 
+      // Check if manual input matches any member in the searchable DB
+      let matchedDbMember = null;
+      if (!customData && manualInput.trim()) {
+        const q = manualInput.trim().toLowerCase();
+        const cleanQuery = q.replace(/[\s+-]/g, '');
+        matchedDbMember = SEARCHABLE_MEMBERS_DB.find((item) => {
+          const cleanPhone = item.phone.replace(/[\s+-]/g, '');
+          return (
+            cleanPhone.includes(cleanQuery) ||
+            item.phone.toLowerCase().includes(q) ||
+            item.userId.toLowerCase() === q ||
+            item.membershipId.toLowerCase() === q ||
+            item.bookingId.toLowerCase() === q ||
+            item.name.toLowerCase() === q
+          );
+        });
+      }
+
       const verifiedItem = {
         key: `log-${Date.now()}`,
-        passId: customData?.passId || (otpInput ? `OTP-${otpInput}` : `MBR-${Math.floor(1000 + Math.random() * 9000)}`),
-        memberName: customData?.memberName || (otpInput === '618304' ? 'Sneha Patel' : otpInput === '502917' ? 'Pooja Sundaram' : 'Ananya Reddy'),
-        avatar: customData?.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150&auto=format&fit=crop',
-        plan: customData?.plan || (otpInput === '502917' ? 'Daily Walk-In Pass' : 'VIP Platinum All-Access'),
+        passId: customData?.membershipId || customData?.bookingId || customData?.passId || matchedDbMember?.membershipId || (otpInput ? `OTP-${otpInput}` : `MBR-${Math.floor(1000 + Math.random() * 9000)}`),
+        userId: customData?.userId || matchedDbMember?.userId || `USR-${Math.floor(1000 + Math.random() * 9000)}`,
+        customerId: customData?.userId || matchedDbMember?.userId || `USR-${Math.floor(1000 + Math.random() * 9000)}`,
+        membershipId: customData?.membershipId || matchedDbMember?.membershipId || `MBR-${Math.floor(1000 + Math.random() * 9000)}`,
+        bookingId: customData?.bookingId || matchedDbMember?.bookingId || `BKG-${Math.floor(10000 + Math.random() * 90000)}`,
+        memberName: customData?.name || customData?.memberName || matchedDbMember?.name || (otpInput === '618304' ? 'Sneha Patel' : otpInput === '502917' ? 'Pooja Sundaram' : 'Rahul Verma'),
+        avatar: customData?.avatar || matchedDbMember?.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150&auto=format&fit=crop',
+        plan: customData?.plan || matchedDbMember?.plan || (otpInput === '502917' ? 'Daily Walk-In Pass' : 'VIP Platinum All-Access'),
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        otp: customData?.otp || otpInput || Math.floor(100000 + Math.random() * 900000).toString(),
+        otp: customData?.otp || (otpInput ? otpInput : '---'),
         status: 'GRANTED',
-        method: customData?.method || (activeOption === 'otp' ? 'OTP Passcode' : 'QR Code'),
-        planExpiry: '30 Dec 2026',
+        method: customData?.method || (activeOption === 'search' ? 'Manual Lookup' : activeOption === 'otp' ? 'OTP Passcode' : 'QR Code'),
+        planExpiry: customData?.planExpiry || matchedDbMember?.planExpiry || '30 Dec 2026',
       };
 
       setLogs((prev) => [verifiedItem, ...prev]);
@@ -239,6 +381,7 @@ export const QrCheckIn = () => {
       fireSuccessConfetti();
       setOtpInput('');
       setManualInput('');
+      setSearchQuery('');
     }, 300);
   };
 
@@ -262,6 +405,52 @@ export const QrCheckIn = () => {
     message.info(`Exit recorded for ${record.memberName}`);
   };
 
+  // Filter Search Results
+  const filteredSearchResults = SEARCHABLE_MEMBERS_DB.filter((item) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return false;
+
+    const cleanQuery = q.replace(/[\s+-]/g, '');
+    const cleanPhone = item.phone.replace(/[\s+-]/g, '');
+
+    if (searchCategory === 'phone') {
+      return cleanPhone.includes(cleanQuery) || item.phone.toLowerCase().includes(q);
+    }
+    if (searchCategory === 'userId') {
+      return item.userId.toLowerCase().includes(q);
+    }
+    if (searchCategory === 'membershipId') {
+      return item.membershipId.toLowerCase().includes(q);
+    }
+    if (searchCategory === 'bookingId') {
+      return item.bookingId.toLowerCase().includes(q);
+    }
+    // 'all' category
+    return (
+      cleanPhone.includes(cleanQuery) ||
+      item.phone.toLowerCase().includes(q) ||
+      item.userId.toLowerCase().includes(q) ||
+      item.membershipId.toLowerCase().includes(q) ||
+      item.bookingId.toLowerCase().includes(q) ||
+      item.name.toLowerCase().includes(q)
+    );
+  });
+
+  const getPlaceholderForCategory = () => {
+    switch (searchCategory) {
+      case 'phone':
+        return 'Enter 10-digit mobile number (e.g. 9876543210)...';
+      case 'userId':
+        return 'Enter User ID (e.g. USR-1029, CUST789012)...';
+      case 'membershipId':
+        return 'Enter Membership ID (e.g. MBR-2024-089)...';
+      case 'bookingId':
+        return 'Enter Booking ID (e.g. BKG-78210)...';
+      default:
+        return 'Search by Mobile No, User ID, Member ID, or Booking ID...';
+    }
+  };
+
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', paddingBottom: 32 }}>
       {/* Header Bar */}
@@ -280,7 +469,7 @@ export const QrCheckIn = () => {
             QR Turnstile & Fast Check-In
           </Title>
           <Text style={{ color: isDarkMode ? '#888888' : '#64748b', fontSize: 13.5 }}>
-            Verify member access through optical QR Scanner or OTP passcode.
+            Verify member access through optical QR Scanner, OTP passcode, or direct ID / Phone lookup.
           </Text>
         </div>
 
@@ -331,22 +520,22 @@ export const QrCheckIn = () => {
             }}
             styles={{ body: { padding: '22px' } }}
           >
-            {/* 2-Option Segmented Control */}
+            {/* 3-Option Segmented Control */}
             <Segmented
               block
               size="large"
               value={activeOption}
               onChange={(val) => {
                 setActiveOption(val);
-                if (val === 'otp') {
+                if (val !== 'qr') {
                   stopCamera();
                 }
               }}
               options={[
                 {
                   label: (
-                    <div style={{ padding: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 600 }}>
-                      <ScanOutlined style={{ fontSize: 16 }} />
+                    <div style={{ padding: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontWeight: 600, fontSize: 13 }}>
+                      <ScanOutlined style={{ fontSize: 15 }} />
                       <span>Scan QR Code</span>
                     </div>
                   ),
@@ -354,12 +543,21 @@ export const QrCheckIn = () => {
                 },
                 {
                   label: (
-                    <div style={{ padding: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 600 }}>
-                      <ThunderboltOutlined style={{ fontSize: 16 }} />
-                      <span>Enter OTP Passcode</span>
+                    <div style={{ padding: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontWeight: 600, fontSize: 13 }}>
+                      <ThunderboltOutlined style={{ fontSize: 15 }} />
+                      <span>Enter OTP</span>
                     </div>
                   ),
                   value: 'otp',
+                },
+                {
+                  label: (
+                    <div style={{ padding: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontWeight: 600, fontSize: 13 }}>
+                      <SearchOutlined style={{ fontSize: 15 }} />
+                      <span>Other</span>
+                    </div>
+                  ),
+                  value: 'search',
                 },
               ]}
               style={{ marginBottom: 20 }}
@@ -570,16 +768,16 @@ export const QrCheckIn = () => {
                   </Button>
                 )}
 
-                {/* Manual Barcode / Member ID Input */}
+                {/* Manual Fast Input */}
                 <div style={{ display: 'flex', gap: 8 }}>
                   <Input
                     prefix={<BarcodeOutlined style={{ color: isDarkMode ? '#888888' : '#94a3b8' }} />}
-                    placeholder="Enter Member ID or scan barcode (e.g. MBR-2024-089)"
+                    placeholder="Enter Mobile No / User ID / Member ID / Booking ID"
                     value={manualInput}
                     onChange={(e) => setManualInput(e.target.value)}
                     onPressEnter={() => {
                       if (manualInput.trim()) {
-                        handleVerify({ passId: manualInput.trim(), memberName: 'Rahul Verma' });
+                        handleVerify();
                       }
                     }}
                     style={{ borderRadius: 'var(--radius-base)' }}
@@ -587,12 +785,7 @@ export const QrCheckIn = () => {
                   <Button
                     type="default"
                     loading={isVerifying}
-                    onClick={() => {
-                      handleVerify({
-                        passId: manualInput.trim() || 'MBR-2024-089',
-                        memberName: 'Rahul Verma',
-                      });
-                    }}
+                    onClick={() => handleVerify()}
                     style={{ borderRadius: 'var(--radius-base)', fontWeight: 600 }}
                   >
                     Verify
@@ -649,6 +842,201 @@ export const QrCheckIn = () => {
                 </Button>
               </div>
             )}
+
+            {/* OPTION 3: SEARCH BY MOBILE NUMBER / USER ID / MEMBERSHIP ID / BOOKING ID */}
+            {activeOption === 'search' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* Search Filter & Bar */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <Select
+                    value={searchCategory}
+                    onChange={setSearchCategory}
+                    style={{ width: 175 }}
+                    options={[
+                      {
+                        value: 'all',
+                        label: (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <SearchOutlined style={{ fontSize: 13, color: '#1677ff' }} />
+                            <span>All Fields</span>
+                          </div>
+                        ),
+                      },
+                      {
+                        value: 'phone',
+                        label: (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <PhoneOutlined style={{ fontSize: 13, color: '#52c41a' }} />
+                            <span>Mobile Number</span>
+                          </div>
+                        ),
+                      },
+                      {
+                        value: 'userId',
+                        label: (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <UserOutlined style={{ fontSize: 13, color: '#1677ff' }} />
+                            <span>User ID</span>
+                          </div>
+                        ),
+                      },
+                      {
+                        value: 'membershipId',
+                        label: (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <IdcardOutlined style={{ fontSize: 13, color: '#fa8c16' }} />
+                            <span>Membership ID</span>
+                          </div>
+                        ),
+                      },
+                      {
+                        value: 'bookingId',
+                        label: (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <FileTextOutlined style={{ fontSize: 13, color: '#9254de' }} />
+                            <span>Booking ID</span>
+                          </div>
+                        ),
+                      },
+                    ]}
+                  />
+
+                  <Input
+                    allowClear
+                    prefix={<SearchOutlined style={{ color: isDarkMode ? '#888888' : '#94a3b8' }} />}
+                    placeholder={getPlaceholderForCategory()}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ flex: 1, minWidth: 220, borderRadius: 'var(--radius-base)' }}
+                  />
+                </div>
+
+                {/* Search Results Display */}
+                <div
+                  style={{
+                    maxHeight: 290,
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                    paddingRight: 4,
+                  }}
+                >
+                  {searchQuery.trim() ? (
+                    filteredSearchResults.length > 0 ? (
+                      filteredSearchResults.map((member) => (
+                        <div
+                          key={member.key}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 14px',
+                            backgroundColor: isDarkMode ? '#141414' : '#f8fafc',
+                            borderRadius: 'var(--radius-base)',
+                            border: `1px solid ${isDarkMode ? '#222222' : '#e2e8f0'}`,
+                            gap: 12,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                            <Avatar size={42} src={member.avatar} icon={<UserOutlined />} style={{ flexShrink: 0 }} />
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                <span style={{ fontWeight: 700, fontSize: 14, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
+                                  {member.name}
+                                </span>
+                                <Tag
+                                  color={member.status === 'ACTIVE' ? 'success' : 'error'}
+                                  style={{ fontWeight: 700, fontSize: 10, margin: 0, borderRadius: 3 }}
+                                >
+                                  {member.status}
+                                </Tag>
+                              </div>
+                              <div style={{ fontSize: 12, color: isDarkMode ? '#aaaaaa' : '#64748b', marginTop: 2 }}>
+                                {member.plan}
+                              </div>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 12,
+                                  fontSize: 11.5,
+                                  color: isDarkMode ? '#888888' : '#64748b',
+                                  marginTop: 6,
+                                  flexWrap: 'wrap',
+                                }}
+                              >
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                  <PhoneOutlined style={{ color: '#1677ff', fontSize: 12 }} />
+                                  <span>{member.phone}</span>
+                                </span>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                  <UserOutlined style={{ color: '#52c41a', fontSize: 12 }} />
+                                  <span>{member.userId}</span>
+                                </span>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                  <IdcardOutlined style={{ color: '#fa8c16', fontSize: 12 }} />
+                                  <span>{member.membershipId}</span>
+                                </span>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                  <FileTextOutlined style={{ color: '#9254de', fontSize: 12 }} />
+                                  <span>{member.bookingId}</span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <Button
+                            type="primary"
+                            size="small"
+                            loading={isVerifying}
+                            danger={member.status === 'EXPIRED'}
+                            onClick={() => handleVerify(member)}
+                            style={{
+                              borderRadius: 'var(--radius-base)',
+                              fontWeight: 600,
+                              fontSize: 12,
+                              height: 32,
+                              padding: '0 14px',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {member.status === 'EXPIRED' ? 'Expired (Check)' : 'Verify & Check In'}
+                          </Button>
+                        </div>
+                      ))
+                    ) : (
+                      <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description={
+                          <span style={{ fontSize: 12.5, color: isDarkMode ? '#888888' : '#94a3b8' }}>
+                            No member or booking found matching "<strong>{searchQuery}</strong>"
+                          </span>
+                        }
+                      />
+                    )
+                  ) : (
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        padding: '24px 16px',
+                        backgroundColor: isDarkMode ? '#141414' : '#f8fafc',
+                        borderRadius: 'var(--radius-base)',
+                        border: `1px dashed ${isDarkMode ? '#262626' : '#cbd5e1'}`,
+                      }}
+                    >
+                      <SearchOutlined style={{ fontSize: 28, color: 'var(--color-primary)', marginBottom: 8 }} />
+                      <div style={{ fontWeight: 600, fontSize: 13, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
+                        Search any member or booking
+                      </div>
+                      <div style={{ fontSize: 12, color: isDarkMode ? '#888888' : '#64748b', marginTop: 4 }}>
+                        Type a mobile number, User ID, Membership ID, or Booking ID above for instant verification.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </Card>
         </Col>
 
@@ -699,8 +1087,23 @@ export const QrCheckIn = () => {
                     <div style={{ fontSize: 12.5, color: isDarkMode ? '#888888' : '#64748b', marginTop: 3 }}>
                       {lastVerified.plan}
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontSize: 12, marginTop: 6 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: isDarkMode ? '#cccccc' : '#475569' }}>
+                        <UserOutlined style={{ color: '#52c41a' }} />
+                        <span>Client ID: </span>
+                        <strong style={{ fontFamily: 'monospace', color: '#52c41a' }}>{lastVerified.customerId || lastVerified.userId || 'USR-1029'}</strong>
+                      </span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: isDarkMode ? '#cccccc' : '#475569' }}>
+                        <IdcardOutlined style={{ color: '#fa8c16' }} />
+                        <span>Member / Booking ID: </span>
+                        <strong style={{ fontFamily: 'monospace', color: '#1677ff' }}>{lastVerified.membershipId || lastVerified.passId}</strong>
+                        {lastVerified.bookingId && (
+                          <span style={{ color: '#9254de', fontFamily: 'monospace' }}>({lastVerified.bookingId})</span>
+                        )}
+                      </span>
+                    </div>
                     <div style={{ fontSize: 11.5, color: isDarkMode ? '#aaaaaa' : '#94a3b8', marginTop: 4 }}>
-                      Pass ID: <span style={{ fontFamily: 'monospace' }}>{lastVerified.passId}</span> • {lastVerified.time} • Via {lastVerified.method}
+                      {lastVerified.time} • Via {lastVerified.method}
                     </div>
                   </div>
                 </div>
@@ -735,6 +1138,7 @@ export const QrCheckIn = () => {
           rowKey="key"
           pagination={{ pageSize: 5 }}
           size="middle"
+          scroll={{ x: 800 }}
           columns={[
             {
               title: 'Time',
@@ -744,19 +1148,109 @@ export const QrCheckIn = () => {
               render: (time) => <span style={{ fontWeight: 600, fontSize: 12 }}>{time}</span>,
             },
             {
+              title: 'Client ID',
+              key: 'clientId',
+              width: 130,
+              render: (_, record) => {
+                const clientId = record.customerId || record.userId || record.passId || 'USR-1029';
+                return (
+                  <Tag
+                    color="green"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontWeight: 650,
+                      fontSize: 11.5,
+                      fontFamily: 'monospace',
+                      borderRadius: 4,
+                      padding: '2px 8px',
+                      margin: 0,
+                    }}
+                  >
+                    <UserOutlined style={{ fontSize: 11 }} />
+                    {clientId}
+                  </Tag>
+                );
+              },
+            },
+            {
               title: 'Member',
               key: 'member',
               render: (_, record) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Avatar size={28} src={record.avatar} icon={<UserOutlined />} />
+                  <Avatar size={30} src={record.avatar} icon={<UserOutlined />} />
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 13, color: isDarkMode ? '#ffffff' : '#0f172a' }}>
                       {record.memberName}
                     </div>
-                    <div style={{ fontSize: 11, color: isDarkMode ? '#888888' : '#64748b' }}>
-                      {record.passId}
-                    </div>
                   </div>
+                </div>
+              ),
+            },
+            {
+              title: 'Membership / Booking ID',
+              key: 'membershipBookingId',
+              width: 220,
+              render: (_, record) => (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                  {record.membershipId && (
+                    <Tag
+                      color="orange"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        fontWeight: 650,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                        borderRadius: 4,
+                        padding: '1px 7px',
+                        margin: 0,
+                      }}
+                    >
+                      <IdcardOutlined style={{ fontSize: 11 }} />
+                      <span>{record.membershipId}</span>
+                    </Tag>
+                  )}
+                  {record.bookingId && (
+                    <Tag
+                      color="purple"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        fontWeight: 600,
+                        fontSize: 10.5,
+                        fontFamily: 'monospace',
+                        borderRadius: 4,
+                        padding: '1px 7px',
+                        margin: 0,
+                      }}
+                    >
+                      <FileTextOutlined style={{ fontSize: 10 }} />
+                      <span>{record.bookingId}</span>
+                    </Tag>
+                  )}
+                  {!record.membershipId && !record.bookingId && record.passId && (
+                    <Tag
+                      color="blue"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        fontWeight: 650,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                        borderRadius: 4,
+                        padding: '1px 7px',
+                        margin: 0,
+                      }}
+                    >
+                      <IdcardOutlined style={{ fontSize: 11 }} />
+                      <span>{record.passId}</span>
+                    </Tag>
+                  )}
                 </div>
               ),
             },
@@ -775,7 +1269,7 @@ export const QrCheckIn = () => {
               dataIndex: 'method',
               key: 'method',
               render: (method) => (
-                <Tag color={method === 'QR Code' ? 'blue' : 'purple'} style={{ borderRadius: 4, fontWeight: 600, fontSize: 11 }}>
+                <Tag color={method === 'QR Code' ? 'blue' : method === 'Manual Lookup' ? 'cyan' : 'purple'} style={{ borderRadius: 4, fontWeight: 600, fontSize: 11 }}>
                   {method}
                 </Tag>
               ),

@@ -49,10 +49,11 @@ export const HomeScreen = ({ navigation }) => {
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   const [bookmarkedGymNames, setBookmarkedGymNames] = useState(
-    new Set(['FitZone Gym', 'PowerHouse Gym'])
+    new Set(['FitZone Gym', 'PowerHouse Gym', 'Core Fit Studio'])
   );
 
   const allGyms = MockData.gyms;
+  const topRatedGyms = allGyms.filter((g) => g.rating >= 4.7);
 
   const toggleBookmark = (gymName) => {
     setBookmarkedGymNames((prev) => {
@@ -155,133 +156,160 @@ export const HomeScreen = ({ navigation }) => {
     selectedFacility !== null ||
     selectedWorkout !== null;
 
-  // 1. Explore Tab View
+  // 1. Explore Tab View matching Flutter 1:1
   const renderExploreTab = () => {
     return (
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.exploreScroll}
       >
-        {/* Location & Notification Header */}
+        {/* 1. Header Bar: "Hello Arjun 👋" + Location */}
         <View style={styles.headerBar}>
-          <View style={styles.headerLeft}>
-            <View style={styles.locationPill}>
-              <MaterialIcons name="location-on" size={16} color={AppColors.primaryNavy} />
-              <Text style={styles.locationCity}>Chennai</Text>
-              <MaterialIcons name="keyboard-arrow-down" size={18} color="#64748B" />
+          <View>
+            <View style={styles.greetingRow}>
+              <Text style={[styles.greetingText, { color: colors.text }]}>Hello Arjun</Text>
+              <Text style={styles.waveEmoji}> 👋</Text>
             </View>
-            <Text style={[styles.subAddress, { color: colors.subtitle }]}>
-              Anna Nagar, 2nd Avenue
-            </Text>
+            <TouchableOpacity style={styles.locationPillRow} activeOpacity={0.7}>
+              <MaterialIcons name="location-on" size={14} color={AppColors.secondaryColor} />
+              <Text style={[styles.locationCityText, { color: colors.subtitle }]}>
+                Anna Nagar, Chennai
+              </Text>
+              <MaterialIcons
+                name="keyboard-arrow-down"
+                size={16}
+                color={colors.subtitle}
+                style={{ marginLeft: 2 }}
+              />
+            </TouchableOpacity>
           </View>
 
+          {/* Notification Button with Red Dot */}
           <TouchableOpacity
             style={[
               styles.notificationBtn,
               {
-                backgroundColor: colors.card,
+                backgroundColor: isDark ? '#1E1E1E' : '#F8FAFC',
                 borderColor: colors.border,
               },
             ]}
+            activeOpacity={0.7}
           >
-            <MaterialIcons name="notifications-none" size={22} color={colors.text} />
-            <View style={styles.notifBadge} />
+            <MaterialIcons name="notifications-none" size={24} color={colors.text} />
+            <View style={styles.notifRedDot} />
           </TouchableOpacity>
         </View>
 
-        {/* Search & Filter Bar */}
+        {/* 2. Search & Filter Bar */}
         <View style={styles.searchBarRow}>
           <View
             style={[
               styles.searchInputContainer,
               {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <MaterialIcons name="search" size={20} color={colors.subtitle} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search gyms, workouts, or locations"
-              placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : '#94A3B8'}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <MaterialIcons name="close" size={18} color={colors.subtitle} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <TouchableOpacity
-            onPress={() => setShowFilterModal(true)}
-            style={[
-              styles.filterBtn,
-              {
-                backgroundColor:
-                  selectedType || selectedFacility || selectedWorkout
-                    ? AppColors.primaryNavy
-                    : colors.card,
+                backgroundColor: isDark ? '#1E1E1E' : '#F8FAFC',
                 borderColor: colors.border,
               },
             ]}
           >
             <MaterialIcons
-              name="tune"
-              size={20}
-              color={
-                selectedType || selectedFacility || selectedWorkout
-                  ? '#FFFFFF'
-                  : colors.text
-              }
+              name="search"
+              size={22}
+              color={isDark ? 'rgba(255,255,255,0.7)' : AppColors.primaryColor}
+              style={{ marginLeft: 12, marginRight: 8 }}
             />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search gyms, workouts, locations..."
+              placeholderTextColor={isDark ? 'rgba(255,255,255,0.45)' : '#94A3B8'}
+              style={[styles.searchInput, { color: colors.text }]}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={{ padding: 8 }}>
+                <MaterialIcons name="close" size={18} color={colors.subtitle} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Solid Gradient Filter Button */}
+          <TouchableOpacity
+            onPress={() => setShowFilterModal(true)}
+            style={styles.filterBtnWrapper}
+            activeOpacity={0.85}
+          >
+            <LinearGradient
+              colors={[AppColors.primaryColor, '#1E40AF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.filterBtn}
+            >
+              <MaterialIcons name="tune" size={22} color="#FFFFFF" />
+              {(selectedType || selectedFacility || selectedWorkout) && (
+                <View style={styles.activeFilterDot} />
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        {/* Promotional Flash Offer Hero Banner */}
-        <View style={styles.bannerContainer}>
-          <LinearGradient
-            colors={['#002B66', '#01327E', '#0047AB']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.bannerGradient}
-          >
-            <View style={styles.bannerLeft}>
-              <View style={styles.flashBadge}>
-                <MaterialIcons name="bolt" size={12} color="#FBBF24" />
-                <Text style={styles.flashBadgeText}>FLASH OFFER</Text>
-              </View>
-              <Text style={styles.bannerHeading}>Get 50% OFF</Text>
-              <Text style={styles.bannerSub}>On your first single-session gym pass</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  if (allGyms.length > 0) {
-                    navigation.navigate('GymDetails', { gym: allGyms[0] });
-                  }
-                }}
-                style={styles.bannerCta}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.bannerCtaText}>Book for ₹99</Text>
-                <MaterialIcons name="arrow-forward" size={14} color="#01327E" />
-              </TouchableOpacity>
-            </View>
-
+        {/* 3. High-Impact Promotional Flash Banner */}
+        <View style={styles.promoBannerWrapper}>
+          <View style={styles.promoBannerContainer}>
             <Image
-              source={require('../../assets/logo/gymezy.png')}
-              style={styles.bannerBgLogo}
-              resizeMode="contain"
+              source={{
+                uri: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800&auto=format&fit=crop',
+              }}
+              style={styles.promoBannerImage}
+              resizeMode="cover"
             />
-          </LinearGradient>
+            <LinearGradient
+              colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']}
+              style={styles.promoGradient}
+            />
+
+            <View style={styles.promoContentOverlay}>
+              {/* Top Row: Flash Badge & Countdown */}
+              <View style={styles.promoTopRow}>
+                <View style={styles.flashBadge}>
+                  <MaterialIcons name="bolt" size={14} color="#FFFFFF" />
+                  <Text style={styles.flashBadgeText}>30% OFF PASS</Text>
+                </View>
+
+                <View style={styles.countdownBadge}>
+                  <MaterialIcons name="timer" size={12} color="rgba(255,255,255,0.7)" />
+                  <Text style={styles.countdownText}>05d : 12h left</Text>
+                </View>
+              </View>
+
+              {/* Bottom Row: Title, Subtitle, Claim Button */}
+              <View style={styles.promoBottomRow}>
+                <View style={{ flex: 1, marginRight: 10 }}>
+                  <Text style={styles.promoGymTitle}>FitZone Luxury Gym</Text>
+                  <Text style={styles.promoGymSubtitle}>Quarterly Membership Pass</Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('GymDetails', { gym: allGyms[0] })}
+                  style={styles.claimOfferBtn}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.claimOfferText}>Claim Offer</Text>
+                  <MaterialIcons
+                    name="arrow-forward"
+                    size={14}
+                    color={AppColors.primaryColor}
+                    style={{ marginLeft: 4 }}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
         </View>
 
-        {/* Curated Workout Category Chips */}
+        {/* 4. Curated Category Chips */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesScroll}
+          contentContainerStyle={styles.categoryPillsScroll}
         >
           {CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat.name;
@@ -290,42 +318,43 @@ export const HomeScreen = ({ navigation }) => {
                 key={cat.name}
                 onPress={() => setSelectedCategory(cat.name)}
                 style={[
-                  styles.categoryChip,
+                  styles.categoryPill,
                   {
                     backgroundColor: isSelected
-                      ? isDark
-                        ? 'rgba(99, 102, 241, 0.25)'
-                        : '#EEF2FF'
+                      ? AppColors.primaryColor
                       : isDark
-                      ? '#262626'
-                      : colors.card,
+                      ? '#1E1E1E'
+                      : '#F1F5F9',
                     borderColor: isSelected
-                      ? AppColors.accentColor
-                      : colors.border,
+                      ? 'transparent'
+                      : isDark
+                      ? 'rgba(255,255,255,0.1)'
+                      : '#E2E8F0',
                   },
                 ]}
+                activeOpacity={0.8}
               >
                 <MaterialIcons
                   name={cat.icon}
                   size={16}
                   color={
                     isSelected
-                      ? isDark
-                        ? '#93C5FD'
-                        : AppColors.accentColor
-                      : colors.subtitle
+                      ? '#FFFFFF'
+                      : isDark
+                      ? 'rgba(255,255,255,0.7)'
+                      : AppColors.primaryColor
                   }
                 />
                 <Text
                   style={[
-                    styles.categoryText,
+                    styles.categoryPillText,
                     {
                       color: isSelected
-                        ? isDark
-                          ? '#93C5FD'
-                          : AppColors.accentColor
+                        ? '#FFFFFF'
+                        : isDark
+                        ? 'rgba(255,255,255,0.7)'
                         : colors.text,
-                      fontWeight: isSelected ? '700' : '500',
+                      fontWeight: isSelected ? '700' : '600',
                     },
                   ]}
                 >
@@ -336,16 +365,19 @@ export const HomeScreen = ({ navigation }) => {
           })}
         </ScrollView>
 
-        {/* Featured Spotlight Carousel (when no search active) */}
+        {/* 5. Spotlight Section: "⭐ Top Rated Near You" Horizontal Carousel */}
         {searchQuery.length === 0 && selectedCategory === 'All' && (
           <View style={styles.spotlightSection}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Featured Spotlight
-              </Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.subtitle }]}>
-                Top Rated Partner Gyms
-              </Text>
+              <View style={styles.sectionTitleWithIcon}>
+                <MaterialIcons name="star" size={22} color="#F59E0B" />
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  Top Rated Near You
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setSelectedCategory('All')}>
+                <Text style={styles.seeAllText}>See all</Text>
+              </TouchableOpacity>
             </View>
 
             <ScrollView
@@ -353,65 +385,102 @@ export const HomeScreen = ({ navigation }) => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.spotlightScroll}
             >
-              {allGyms.slice(0, 3).map((gym) => (
-                <TouchableOpacity
-                  key={gym.name}
-                  onPress={() => navigation.navigate('GymDetails', { gym })}
-                  activeOpacity={0.9}
-                  style={[
-                    styles.spotlightCard,
-                    {
-                      backgroundColor: colors.card,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Image source={{ uri: gym.imageUrl }} style={styles.spotlightImage} />
-                  <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.85)']}
-                    style={styles.spotlightGradient}
-                  />
+              {topRatedGyms.map((gym) => {
+                const isBookmarked = bookmarkedGymNames.has(gym.name);
+                return (
+                  <TouchableOpacity
+                    key={gym.name}
+                    onPress={() => navigation.navigate('GymDetails', { gym })}
+                    activeOpacity={0.88}
+                    style={[
+                      styles.spotlightCard,
+                      {
+                        backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
+                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E2E8F0',
+                      },
+                    ]}
+                  >
+                    {/* Image Stack */}
+                    <View style={styles.spotlightImageWrapper}>
+                      <Image
+                        source={{ uri: gym.imageUrl }}
+                        style={styles.spotlightImage}
+                        resizeMode="cover"
+                      />
+                      {/* Rating Badge */}
+                      <View style={styles.spotlightRatingBadge}>
+                        <MaterialIcons name="star" size={14} color="#F59E0B" />
+                        <Text style={styles.spotlightRatingText}>{gym.rating}</Text>
+                      </View>
 
-                  {/* Badge */}
-                  {gym.badgeText && (
-                    <View style={styles.spotlightBadge}>
-                      <Text style={styles.spotlightBadgeText}>{gym.badgeText}</Text>
+                      {/* Bookmark Button */}
+                      <TouchableOpacity
+                        onPress={() => toggleBookmark(gym.name)}
+                        style={styles.spotlightBookmarkBtn}
+                        activeOpacity={0.8}
+                      >
+                        <MaterialIcons
+                          name={isBookmarked ? 'bookmark' : 'bookmark-border'}
+                          size={16}
+                          color={isBookmarked ? AppColors.secondaryColor : '#FFFFFF'}
+                        />
+                      </TouchableOpacity>
                     </View>
-                  )}
 
-                  {/* Rating Pill */}
-                  <View style={styles.spotlightRatingPill}>
-                    <MaterialIcons name="star" size={12} color="#F59E0B" />
-                    <Text style={styles.spotlightRatingText}>{gym.rating}</Text>
-                  </View>
-
-                  <View style={styles.spotlightContent}>
-                    <Text style={styles.spotlightName}>{gym.name}</Text>
-                    <Text style={styles.spotlightLoc}>{gym.location}</Text>
-                    <View style={styles.spotlightBottomRow}>
-                      <Text style={styles.spotlightPrice}>
-                        ₹{gym.pricePerSession.toFixed(0)}{' '}
-                        <Text style={styles.perSessionText}>/ session</Text>
+                    {/* Details */}
+                    <View style={styles.spotlightDetailsPadding}>
+                      <Text
+                        style={[styles.spotlightGymName, { color: colors.text }]}
+                        numberOfLines={1}
+                      >
+                        {gym.name}
                       </Text>
-                      <View style={styles.spotlightBookBtn}>
-                        <Text style={styles.spotlightBookText}>Book Now</Text>
+
+                      <View style={styles.spotlightLocationRow}>
+                        <MaterialIcons
+                          name="location-on"
+                          size={13}
+                          color={colors.subtitle}
+                        />
+                        <Text
+                          style={[styles.spotlightLocationText, { color: colors.subtitle }]}
+                          numberOfLines={1}
+                        >
+                          {gym.location} • {gym.distance} km
+                        </Text>
+                      </View>
+
+                      <View style={styles.spotlightBottomRow}>
+                        <Text style={styles.spotlightPriceText}>
+                          <Text style={[styles.spotlightPriceVal, { color: colors.text }]}>
+                            ₹{gym.pricePerSession.toFixed(0)}
+                          </Text>
+                          <Text style={[styles.spotlightPriceSub, { color: colors.subtitle }]}>
+                            {' '}
+                            /session
+                          </Text>
+                        </Text>
+
+                        <View style={styles.spotlightBookSlotPill}>
+                          <Text style={styles.spotlightBookSlotText}>Book Slot</Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           </View>
         )}
 
-        {/* Nearby Gyms Header & Count */}
+        {/* 6. Nearby Gyms Header */}
         <View style={styles.nearbyHeaderRow}>
-          <View style={styles.nearbyTitleGroup}>
-            <Text style={[styles.nearbyTitle, { color: colors.text }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[styles.nearbySectionTitle, { color: colors.text }]}>
               {selectedCategory === 'All' ? 'Nearby Gyms' : `${selectedCategory} Gyms`}
             </Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countBadgeText}>{filteredGyms.length}</Text>
+            <View style={styles.gymsCountBadge}>
+              <Text style={styles.gymsCountText}>{filteredGyms.length}</Text>
             </View>
           </View>
 
@@ -422,143 +491,283 @@ export const HomeScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* Gym List Cards */}
+        {/* 7. Gym List Cards */}
         {filteredGyms.length === 0 ? (
           <View style={styles.emptyContainer}>
             <MaterialIcons name="search-off" size={48} color={colors.subtitle} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              No Gyms Found
-            </Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No gyms found</Text>
             <Text style={[styles.emptySub, { color: colors.subtitle }]}>
-              Try adjusting your filters or search keywords
+              Try adjusting your search or filters to see more results
             </Text>
-            <TouchableOpacity
-              onPress={clearAllFilters}
-              style={[styles.emptyResetBtn, { backgroundColor: AppColors.primaryNavy }]}
-            >
-              <Text style={styles.emptyResetText}>Reset All Filters</Text>
-            </TouchableOpacity>
           </View>
         ) : (
-          filteredGyms.map((gym) => {
+          filteredGyms.map((gym, index) => {
             const isBookmarked = bookmarkedGymNames.has(gym.name);
+
             return (
-              <TouchableOpacity
-                key={gym.name}
-                onPress={() => navigation.navigate('GymDetails', { gym })}
-                activeOpacity={0.88}
-                style={[
-                  styles.gymCard,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                {/* Gym Photo */}
-                <View style={styles.gymCardImageWrapper}>
-                  <Image source={{ uri: gym.imageUrl }} style={styles.gymCardImage} />
-
-                  {/* Bookmark Button */}
-                  <TouchableOpacity
-                    onPress={() => toggleBookmark(gym.name)}
-                    style={styles.bookmarkIconBtn}
-                    activeOpacity={0.8}
-                  >
-                    <MaterialIcons
-                      name={isBookmarked ? 'bookmark' : 'bookmark-border'}
-                      size={20}
-                      color={isBookmarked ? AppColors.secondaryColor : '#FFFFFF'}
+              <View key={gym.id || gym.name} style={{ marginHorizontal: 16, marginBottom: 16 }}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('GymDetails', { gym })}
+                  activeOpacity={0.9}
+                  style={[
+                    styles.gymCard,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  {/* Gym Hero Image with Badges */}
+                  <View style={styles.gymCardImageContainer}>
+                    <Image
+                      source={{ uri: gym.imageUrl }}
+                      style={styles.gymCardImage}
+                      resizeMode="cover"
                     />
-                  </TouchableOpacity>
 
-                  {/* Distance Pill */}
-                  <View style={styles.distancePill}>
-                    <MaterialIcons name="near-me" size={11} color="#FFFFFF" />
-                    <Text style={styles.distanceText}>{gym.distance} km away</Text>
+                    <LinearGradient
+                      colors={['transparent', 'rgba(0,0,0,0.6)']}
+                      style={styles.gymCardGradient}
+                    />
+
+                    {/* Popular / Best Badge */}
+                    {gym.badgeText && (
+                      <View style={styles.cardPopularBadge}>
+                        <MaterialIcons name="local-fire-department" size={13} color="#FFFFFF" />
+                        <Text style={styles.cardPopularBadgeText}>{gym.badgeText}</Text>
+                      </View>
+                    )}
+
+                    {/* Bookmark Button */}
+                    <TouchableOpacity
+                      onPress={() => toggleBookmark(gym.name)}
+                      style={styles.cardBookmarkBtn}
+                      activeOpacity={0.8}
+                    >
+                      <MaterialIcons
+                        name={isBookmarked ? 'bookmark' : 'bookmark-border'}
+                        size={18}
+                        color={isBookmarked ? AppColors.secondaryColor : '#FFFFFF'}
+                      />
+                    </TouchableOpacity>
+
+                    {/* Image Bottom Info Overlay */}
+                    <View style={styles.cardImageBottomInfo}>
+                      <View style={styles.cardRatingPill}>
+                        <MaterialIcons name="star" size={13} color="#F59E0B" />
+                        <Text style={styles.cardRatingText}>{gym.rating}</Text>
+                        <Text style={styles.cardReviewsCountText}>({gym.reviewsCount})</Text>
+                      </View>
+
+                      <View style={styles.cardDistancePill}>
+                        <MaterialIcons name="near-me" size={12} color="#FFFFFF" />
+                        <Text style={styles.cardDistanceText}>{gym.distance} km</Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
 
-                {/* Card Content */}
-                <View style={styles.gymCardBody}>
-                  <View style={styles.gymCardHeaderRow}>
-                    <View style={{ flex: 1 }}>
+                  {/* Gym Card Details Content */}
+                  <View style={styles.gymCardDetailsContent}>
+                    <View style={styles.gymTitleRow}>
                       <Text
-                        style={[styles.gymCardTitle, { color: colors.text }]}
+                        style={[styles.cardGymNameTitle, { color: colors.text }]}
                         numberOfLines={1}
                       >
                         {gym.name}
                       </Text>
-                      <Text
-                        style={[styles.gymCardLocation, { color: colors.subtitle }]}
-                        numberOfLines={1}
-                      >
-                        {gym.location}
+                      <Text style={[styles.cardPerSessionPrice, { color: colors.text }]}>
+                        ₹{gym.pricePerSession.toFixed(0)}
+                        <Text style={[styles.cardPerSessionSub, { color: colors.subtitle }]}>
+                          /session
+                        </Text>
                       </Text>
                     </View>
 
-                    {/* Rating badge */}
-                    <View
-                      style={[
-                        styles.ratingBadge,
-                        {
-                          backgroundColor: isDark
-                            ? 'rgba(27, 94, 32, 0.3)'
-                            : '#E8F5E9',
-                        },
-                      ]}
+                    <Text
+                      style={[styles.cardGymAddressText, { color: colors.subtitle }]}
+                      numberOfLines={1}
                     >
-                      <MaterialIcons name="star" size={12} color="#16A34A" />
-                      <Text style={styles.ratingBadgeText}>{gym.rating}</Text>
-                      <Text style={styles.ratingCountText}>({gym.reviewsCount})</Text>
+                      {gym.location}
+                    </Text>
+
+                    {/* Tags Row */}
+                    <View style={styles.tagsContainer}>
+                      {gym.tags.slice(0, 3).map((tag, idx) => (
+                        <View
+                          key={idx}
+                          style={[
+                            styles.tagChip,
+                            {
+                              backgroundColor: isDark ? '#262626' : '#F1F5F9',
+                              borderColor: colors.border,
+                            },
+                          ]}
+                        >
+                          <Text style={[styles.tagChipText, { color: colors.subtitle }]}>
+                            {tag}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    {/* Bottom Action Strip */}
+                    <View style={styles.gymCardBottomStrip}>
+                      <View>
+                        <Text style={[styles.pricePrefix, { color: colors.subtitle }]}>
+                          Pass starts from
+                        </Text>
+                        <Text style={[styles.cardPriceText, { color: colors.text }]}>
+                          ₹{gym.pricePerSession.toFixed(0)}{' '}
+                          <Text style={styles.cardPerSession}>/ day</Text>
+                        </Text>
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={() => navigation.navigate('GymDetails', { gym })}
+                        style={[styles.viewGymBtn, { backgroundColor: AppColors.primaryColor }]}
+                      >
+                        <Text style={styles.viewGymText}>Book Now</Text>
+                        <MaterialIcons name="arrow-forward" size={14} color="#FFFFFF" />
+                      </TouchableOpacity>
                     </View>
                   </View>
+                </TouchableOpacity>
 
-                  {/* Tags */}
-                  <View style={styles.tagsRow}>
-                    {gym.tags.slice(0, 3).map((tag, idx) => (
-                      <View
-                        key={idx}
+                {/* 'GYMEZY for you' section after index 3 or at bottom */}
+                {index === 3 && (
+                  <View style={styles.gymezyForYouSection}>
+                    <View style={styles.forYouHeader}>
+                      <Text style={[styles.forYouTitle, { color: colors.text }]}>
+                        GYMEZY for you
+                      </Text>
+                      <View style={styles.exclusiveBadge}>
+                        <Text style={styles.exclusiveBadgeText}>Exclusive</Text>
+                      </View>
+                    </View>
+
+                    {/* 2-Column Cards Grid */}
+                    <View style={styles.forYouGrid}>
+                      <TouchableOpacity
+                        onPress={() => navigation.navigate('BuyMembership', { gym: allGyms[0] })}
                         style={[
-                          styles.tagChip,
+                          styles.forYouCard,
                           {
-                            backgroundColor: isDark ? '#262626' : '#F1F5F9',
+                            backgroundColor: colors.card,
                             borderColor: colors.border,
                           },
                         ]}
                       >
-                        <Text style={[styles.tagChipText, { color: colors.subtitle }]}>
-                          {tag}
+                        <View
+                          style={[
+                            styles.forYouIconBox,
+                            { backgroundColor: 'rgba(0, 56, 130, 0.1)' },
+                          ]}
+                        >
+                          <MaterialIcons
+                            name="card-membership"
+                            size={24}
+                            color={AppColors.primaryColor}
+                          />
+                        </View>
+                        <Text style={[styles.forYouCardTitle, { color: colors.text }]}>
+                          All-Access Pass
                         </Text>
-                      </View>
-                    ))}
-                  </View>
+                        <Text style={[styles.forYouCardSub, { color: colors.subtitle }]}>
+                          Work out at any partner gym across Chennai
+                        </Text>
+                        <View style={styles.forYouLinkRow}>
+                          <Text
+                            style={[
+                              styles.forYouLinkText,
+                              { color: isDark ? '#93C5FD' : AppColors.primaryColor },
+                            ]}
+                          >
+                            Get pass
+                          </Text>
+                          <MaterialIcons
+                            name="arrow-outward"
+                            size={14}
+                            color={isDark ? '#93C5FD' : AppColors.primaryColor}
+                          />
+                        </View>
+                      </TouchableOpacity>
 
-                  {/* Bottom Price & Booking Strip */}
-                  <View style={styles.gymCardBottomStrip}>
-                    <View>
-                      <Text style={[styles.pricePrefix, { color: colors.subtitle }]}>
-                        Pass starts from
-                      </Text>
-                      <Text style={[styles.cardPriceText, { color: colors.text }]}>
-                        ₹{gym.pricePerSession.toFixed(0)}{' '}
-                        <Text style={styles.cardPerSession}>/ day</Text>
-                      </Text>
+                      <TouchableOpacity
+                        onPress={() => navigation.navigate('BookingSession', { gym: allGyms[0] })}
+                        style={[
+                          styles.forYouCard,
+                          {
+                            backgroundColor: colors.card,
+                            borderColor: colors.border,
+                          },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.forYouIconBox,
+                            { backgroundColor: 'rgba(0, 191, 98, 0.12)' },
+                          ]}
+                        >
+                          <MaterialIcons
+                            name="fitness-center"
+                            size={24}
+                            color={AppColors.secondaryColor}
+                          />
+                        </View>
+                        <Text style={[styles.forYouCardTitle, { color: colors.text }]}>
+                          Certified Trainers
+                        </Text>
+                        <Text style={[styles.forYouCardSub, { color: colors.subtitle }]}>
+                          Book 1-on-1 personal coaches at special rates
+                        </Text>
+                        <View style={styles.forYouLinkRow}>
+                          <Text
+                            style={[
+                              styles.forYouLinkText,
+                              { color: AppColors.secondaryColor },
+                            ]}
+                          >
+                            Book trainer
+                          </Text>
+                          <MaterialIcons
+                            name="arrow-outward"
+                            size={14}
+                            color={AppColors.secondaryColor}
+                          />
+                        </View>
+                      </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity
-                      onPress={() => navigation.navigate('GymDetails', { gym })}
-                      style={[
-                        styles.viewGymBtn,
-                        { backgroundColor: AppColors.primaryNavy },
-                      ]}
-                    >
-                      <Text style={styles.viewGymText}>View Details</Text>
-                      <MaterialIcons name="arrow-forward" size={14} color="#FFFFFF" />
-                    </TouchableOpacity>
+                    {/* Watermark Branding */}
+                    <View style={styles.watermarkSection}>
+                      <Text
+                        style={[
+                          styles.watermarkLogo,
+                          {
+                            color: isDark
+                              ? 'rgba(255, 255, 255, 0.16)'
+                              : 'rgba(1, 50, 126, 0.12)',
+                          },
+                        ]}
+                      >
+                        gymezy
+                      </Text>
+                      <Text
+                        style={[
+                          styles.watermarkTagline,
+                          {
+                            color: isDark
+                              ? 'rgba(255, 255, 255, 0.12)'
+                              : 'rgba(1, 50, 126, 0.10)',
+                          },
+                        ]}
+                      >
+                        for fitness. for you
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
+                )}
+              </View>
             );
           })
         )}
@@ -568,7 +777,7 @@ export const HomeScreen = ({ navigation }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
         {currentTab === 0 && renderExploreTab()}
         {currentTab === 1 && <MyBookingsScreen navigation={navigation} />}
         {currentTab === 2 && <MyMembershipsScreen navigation={navigation} />}
@@ -598,144 +807,102 @@ export const HomeScreen = ({ navigation }) => {
           <View
             style={[
               styles.filterModalContent,
-              { backgroundColor: colors.card, borderColor: colors.border },
+              { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
             ]}
           >
             <View style={styles.filterModalHeader}>
-              <Text style={[styles.filterModalTitle, { color: colors.text }]}>
-                Filter Gyms
-              </Text>
+              <Text style={[styles.filterModalTitle, { color: colors.text }]}>Filters</Text>
               <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <MaterialIcons name="close" size={24} color={colors.text} />
+                <MaterialIcons name="close" size={24} color={colors.subtitle} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-              {/* Gym Type Filter */}
-              <Text style={[styles.filterGroupTitle, { color: colors.text }]}>
-                Gym Type
-              </Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Gym Type */}
+              <Text style={[styles.filterGroupTitle, { color: colors.text }]}>Gym Type</Text>
               <View style={styles.filterChipsRow}>
-                {['Unisex', 'Women Only', 'Men Only'].map((t) => (
-                  <TouchableOpacity
-                    key={t}
-                    onPress={() => setSelectedType(selectedType === t ? null : t)}
-                    style={[
-                      styles.filterChip,
-                      {
-                        backgroundColor:
-                          selectedType === t ? AppColors.primaryNavy : colors.background,
-                        borderColor:
-                          selectedType === t ? AppColors.primaryNavy : colors.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={{
-                        color: selectedType === t ? '#FFFFFF' : colors.text,
-                        fontWeight: selectedType === t ? '700' : '500',
-                      }}
+                {['All Gyms', 'Unisex', 'Women Only', 'Men Only'].map((type) => {
+                  const isSel = (selectedType === null && type === 'All Gyms') || selectedType === type;
+                  return (
+                    <TouchableOpacity
+                      key={type}
+                      onPress={() => setSelectedType(type === 'All Gyms' ? null : type)}
+                      style={[
+                        styles.filterChip,
+                        {
+                          backgroundColor: isSel
+                            ? AppColors.primaryColor
+                            : isDark
+                            ? '#262626'
+                            : '#F1F5F9',
+                          borderColor: isSel ? AppColors.primaryColor : colors.border,
+                        },
+                      ]}
                     >
-                      {t}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          { color: isSel ? '#FFFFFF' : colors.text },
+                        ]}
+                      >
+                        {type}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
-              {/* Facilities Filter */}
-              <Text style={[styles.filterGroupTitle, { color: colors.text }]}>
-                Key Facilities
+              {/* Facility */}
+              <Text style={[styles.filterGroupTitle, { color: colors.text, marginTop: 16 }]}>
+                Facilities
               </Text>
               <View style={styles.filterChipsRow}>
-                {['AC', 'Locker', 'Shower', 'Parking'].map((f) => (
-                  <TouchableOpacity
-                    key={f}
-                    onPress={() =>
-                      setSelectedFacility(selectedFacility === f ? null : f)
-                    }
-                    style={[
-                      styles.filterChip,
-                      {
-                        backgroundColor:
-                          selectedFacility === f
-                            ? AppColors.primaryNavy
-                            : colors.background,
-                        borderColor:
-                          selectedFacility === f
-                            ? AppColors.primaryNavy
-                            : colors.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={{
-                        color: selectedFacility === f ? '#FFFFFF' : colors.text,
-                        fontWeight: selectedFacility === f ? '700' : '500',
-                      }}
+                {['All Facilities', 'AC', 'Locker', 'Shower', 'Parking'].map((fac) => {
+                  const isSel = (selectedFacility === null && fac === 'All Facilities') || selectedFacility === fac;
+                  return (
+                    <TouchableOpacity
+                      key={fac}
+                      onPress={() => setSelectedFacility(fac === 'All Facilities' ? null : fac)}
+                      style={[
+                        styles.filterChip,
+                        {
+                          backgroundColor: isSel
+                            ? AppColors.primaryColor
+                            : isDark
+                            ? '#262626'
+                            : '#F1F5F9',
+                          borderColor: isSel ? AppColors.primaryColor : colors.border,
+                        },
+                      ]}
                     >
-                      {f}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Workouts Filter */}
-              <Text style={[styles.filterGroupTitle, { color: colors.text }]}>
-                Workouts Offered
-              </Text>
-              <View style={styles.filterChipsRow}>
-                {['Strength', 'CrossFit', 'Yoga', 'HIIT', 'Zumba'].map((w) => (
-                  <TouchableOpacity
-                    key={w}
-                    onPress={() =>
-                      setSelectedWorkout(selectedWorkout === w ? null : w)
-                    }
-                    style={[
-                      styles.filterChip,
-                      {
-                        backgroundColor:
-                          selectedWorkout === w
-                            ? AppColors.primaryNavy
-                            : colors.background,
-                        borderColor:
-                          selectedWorkout === w
-                            ? AppColors.primaryNavy
-                            : colors.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={{
-                        color: selectedWorkout === w ? '#FFFFFF' : colors.text,
-                        fontWeight: selectedWorkout === w ? '700' : '500',
-                      }}
-                    >
-                      {w}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          { color: isSel ? '#FFFFFF' : colors.text },
+                        ]}
+                      >
+                        {fac}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </ScrollView>
 
-            {/* Bottom Actions */}
-            <View style={styles.filterBottomActions}>
+            {/* Action Buttons */}
+            <View style={styles.filterActionsRow}>
               <TouchableOpacity
-                onPress={() => {
-                  clearAllFilters();
-                  setShowFilterModal(false);
-                }}
+                onPress={clearAllFilters}
                 style={[styles.filterResetBtn, { borderColor: colors.border }]}
               >
-                <Text style={{ color: colors.text, fontWeight: '700' }}>Reset</Text>
+                <Text style={[styles.filterResetText, { color: colors.text }]}>Reset</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => setShowFilterModal(false)}
-                style={[
-                  styles.filterApplyBtn,
-                  { backgroundColor: AppColors.secondaryColor },
-                ]}
+                style={styles.filterApplyBtn}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Apply Filters</Text>
+                <Text style={styles.filterApplyText}>Apply Filters</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -750,43 +917,49 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   exploreScroll: {
-    paddingBottom: 95,
+    paddingBottom: 120,
   },
+
+  /* Header Bar */
   headerBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingTop: 14,
   },
-  headerLeft: {
-    flex: 1,
-  },
-  locationPill: {
+  greetingRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  locationCity: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: AppColors.primaryNavy,
-    marginHorizontal: 4,
+  greetingText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    letterSpacing: -0.3,
   },
-  subAddress: {
+  waveEmoji: {
+    fontSize: 20,
+  },
+  locationPillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  locationCityText: {
     fontSize: 12,
-    marginTop: 2,
+    fontWeight: '600',
+    marginLeft: 4,
   },
   notificationBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    borderWidth: 1,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
     position: 'relative',
   },
-  notifBadge: {
+  notifRedDot: {
     position: 'absolute',
     top: 10,
     right: 10,
@@ -795,203 +968,243 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#EF4444',
   },
+
+  /* Search & Filter Bar */
   searchBarRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginTop: 16,
   },
   searchInputContainer: {
     flex: 1,
-    height: 48,
+    height: 52,
     borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    marginRight: 10,
   },
   searchInput: {
     flex: 1,
     fontSize: 13.5,
-    marginLeft: 8,
+    height: '100%',
+  },
+  filterBtnWrapper: {
+    marginLeft: 10,
+    borderRadius: 16,
   },
   filterBtn: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
     borderRadius: 16,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
-  bannerContainer: {
+  activeFilterDot: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: AppColors.secondaryColor,
+  },
+
+  /* High-Impact Promotional Flash Banner */
+  promoBannerWrapper: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginTop: 18,
   },
-  bannerGradient: {
-    borderRadius: 22,
-    padding: 18,
-    flexDirection: 'row',
+  promoBannerContainer: {
+    height: 180,
+    borderRadius: 24,
     overflow: 'hidden',
     position: 'relative',
   },
-  bannerLeft: {
-    flex: 1,
-    zIndex: 2,
+  promoBannerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  promoGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  promoContentOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    padding: 18,
+    justifyContent: 'space-between',
+  },
+  promoTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   flashBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
+    backgroundColor: AppColors.secondaryColor,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
   },
   flashBadgeText: {
-    color: '#FBBF24',
-    fontSize: 10,
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    marginLeft: 3,
+  },
+  countdownBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 0.8,
+    borderColor: 'rgba(255,255,255,0.24)',
+  },
+  countdownText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
     marginLeft: 4,
   },
-  bannerHeading: {
+  promoBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  promoGymTitle: {
     color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  bannerSub: {
-    color: 'rgba(255, 255, 255, 0.85)',
+  promoGymSubtitle: {
+    color: 'rgba(255,255,255,0.7)',
     fontSize: 12,
-    marginTop: 3,
-    marginBottom: 12,
+    marginTop: 2,
   },
-  bannerCta: {
+  claimOfferBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
+    paddingVertical: 10,
+    borderRadius: 14,
   },
-  bannerCtaText: {
-    color: '#01327E',
-    fontSize: 12.5,
-    fontWeight: '800',
-    marginRight: 4,
+  claimOfferText: {
+    color: AppColors.primaryColor,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
-  bannerBgLogo: {
-    position: 'absolute',
-    right: -20,
-    bottom: -20,
-    width: 140,
-    height: 140,
-    opacity: 0.15,
-    tintColor: '#FFFFFF',
-  },
-  categoriesScroll: {
+
+  /* Category Pills */
+  categoryPillsScroll: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingTop: 22,
+    paddingBottom: 4,
+    gap: 8,
   },
-  categoryChip: {
+  categoryPill: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 14,
+    paddingVertical: 10,
+    borderRadius: 18,
     borderWidth: 1,
-    marginRight: 8,
   },
-  categoryText: {
-    fontSize: 12.5,
+  categoryPillText: {
+    fontSize: 13,
     marginLeft: 6,
   },
+
+  /* Spotlight Section */
   spotlightSection: {
-    marginBottom: 20,
+    marginTop: 24,
   },
   sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 12,
+  },
+  sectionTitleWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+    fontWeight: 'bold',
+    marginLeft: 6,
   },
-  sectionSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
+  seeAllText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: AppColors.secondaryColor,
   },
   spotlightScroll: {
     paddingHorizontal: 16,
   },
   spotlightCard: {
-    width: SCREEN_WIDTH * 0.72,
-    height: 190,
-    borderRadius: 22,
+    width: 250,
+    borderRadius: 20,
     borderWidth: 1,
-    overflow: 'hidden',
     marginRight: 14,
+    overflow: 'hidden',
+  },
+  spotlightImageWrapper: {
+    height: 120,
+    width: '100%',
     position: 'relative',
   },
   spotlightImage: {
     width: '100%',
     height: '100%',
   },
-  spotlightGradient: {
+  spotlightRatingBadge: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-  },
-  spotlightBadge: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    backgroundColor: AppColors.secondaryColor,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  spotlightBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  spotlightRatingPill: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    top: 8,
+    left: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   spotlightRatingText: {
     color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: 'bold',
     marginLeft: 3,
   },
-  spotlightContent: {
+  spotlightBookmarkBtn: {
     position: 'absolute',
-    bottom: 12,
-    left: 12,
-    right: 12,
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  spotlightName: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
+  spotlightDetailsPadding: {
+    padding: 12,
   },
-  spotlightLoc: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 11.5,
-    marginTop: 2,
+  spotlightGymName: {
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  spotlightLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  spotlightLocationText: {
+    fontSize: 11,
+    marginLeft: 2,
   },
   spotlightBottomRow: {
     flexDirection: 'row',
@@ -999,81 +1212,111 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  spotlightPrice: {
-    color: '#FFFFFF',
+  spotlightPriceText: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  spotlightPriceVal: {
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: 'bold',
   },
-  perSessionText: {
+  spotlightPriceSub: {
     fontSize: 10,
-    fontWeight: '400',
-    color: 'rgba(255,255,255,0.7)',
   },
-  spotlightBookBtn: {
-    backgroundColor: AppColors.secondaryColor,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+  spotlightBookSlotPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 8,
+    backgroundColor: 'rgba(0, 56, 130, 0.08)',
   },
-  spotlightBookText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
+  spotlightBookSlotText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: AppColors.primaryColor,
   },
+
+  /* Nearby Gyms Header */
   nearbyHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
+    marginTop: 24,
     marginBottom: 14,
   },
-  nearbyTitleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  nearbyTitle: {
+  nearbySectionTitle: {
     fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+    fontWeight: 'bold',
   },
-  countBadge: {
+  gymsCountBadge: {
     backgroundColor: 'rgba(0, 56, 130, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
     marginLeft: 8,
   },
-  countBadgeText: {
-    color: AppColors.primaryNavy,
+  gymsCountText: {
+    color: AppColors.primaryColor,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: 'bold',
   },
   resetFiltersText: {
     color: '#EF4444',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: 'bold',
   },
+
+  /* Gym Card */
   gymCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
     borderRadius: 22,
     borderWidth: 1,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  gymCardImageWrapper: {
+  gymCardImageContainer: {
     height: 160,
+    width: '100%',
     position: 'relative',
   },
   gymCardImage: {
     width: '100%',
     height: '100%',
   },
-  bookmarkIconBtn: {
+  gymCardGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 50,
+  },
+  cardPopularBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppColors.secondaryColor,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  cardPopularBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginLeft: 3,
+  },
+  cardBookmarkBtn: {
     position: 'absolute',
     top: 12,
     right: 12,
@@ -1084,73 +1327,87 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  distancePill: {
+  cardImageBottomInfo: {
     position: 'absolute',
-    bottom: 12,
+    bottom: 10,
     left: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  distanceText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-  gymCardBody: {
-    padding: 16,
-  },
-  gymCardHeaderRow: {
+    right: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
-  gymCardTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  gymCardLocation: {
-    fontSize: 12.5,
-    marginTop: 2,
-  },
-  ratingBadge: {
+  cardRatingPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 7,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 8,
-    marginLeft: 8,
+    borderRadius: 10,
   },
-  ratingBadgeText: {
-    color: '#16A34A',
-    fontSize: 12,
-    fontWeight: '800',
+  cardRatingText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: 'bold',
     marginLeft: 3,
   },
-  ratingCountText: {
-    color: '#64748B',
+  cardReviewsCountText: {
+    color: 'rgba(255,255,255,0.7)',
     fontSize: 10,
     marginLeft: 2,
   },
-  tagsRow: {
+  cardDistancePill: {
     flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  cardDistanceText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: 'bold',
+    marginLeft: 3,
+  },
+  gymCardDetailsContent: {
+    padding: 16,
+  },
+  gymTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cardGymNameTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  cardPerSessionPrice: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  cardPerSessionSub: {
+    fontSize: 11,
+    fontWeight: 'normal',
+  },
+  cardGymAddressText: {
+    fontSize: 12.5,
+    marginTop: 3,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
     marginTop: 10,
   },
   tagChip: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 8,
-    borderWidth: 0.8,
-    marginRight: 6,
+    borderWidth: 1,
   },
   tagChipText: {
-    fontSize: 10.5,
-    fontWeight: '600',
+    fontSize: 11,
   },
   gymCardBottomStrip: {
     flexDirection: 'row',
@@ -1159,19 +1416,18 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 0.8,
-    borderTopColor: 'rgba(148, 163, 184, 0.2)',
+    borderTopColor: '#E2E8F0',
   },
   pricePrefix: {
-    fontSize: 10.5,
+    fontSize: 10,
   },
   cardPriceText: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
   cardPerSession: {
     fontSize: 11,
-    fontWeight: '500',
-    color: '#64748B',
+    fontWeight: 'normal',
   },
   viewGymBtn: {
     flexDirection: 'row',
@@ -1183,81 +1439,152 @@ const styles = StyleSheet.create({
   viewGymText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: 'bold',
     marginRight: 4,
   },
+
+  /* 'GYMEZY for you' Section */
+  gymezyForYouSection: {
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  forYouHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  forYouTitle: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    letterSpacing: -0.3,
+  },
+  exclusiveBadge: {
+    backgroundColor: 'rgba(0, 191, 98, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  exclusiveBadgeText: {
+    color: AppColors.secondaryColor,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  forYouGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  forYouCard: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  forYouIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  forYouCardTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  forYouCardSub: {
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 4,
+  },
+  forYouLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  forYouLinkText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginRight: 4,
+  },
+  watermarkSection: {
+    marginTop: 24,
+    marginBottom: 10,
+  },
+  watermarkLogo: {
+    fontSize: 46,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  watermarkTagline: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 2.5,
+  },
+
+  /* Empty State */
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    paddingVertical: 50,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 12,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 10,
   },
   emptySub: {
-    fontSize: 13,
-    textAlign: 'center',
+    fontSize: 12,
     marginTop: 4,
-    marginBottom: 16,
   },
-  emptyResetBtn: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  emptyResetText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
-  },
+
+  /* Filter Modal */
   filterModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
     justifyContent: 'flex-end',
   },
   filterModalContent: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     maxHeight: '80%',
   },
   filterModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   filterModalTitle: {
-    fontSize: 19,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   filterGroupTitle: {
     fontSize: 14,
-    fontWeight: '700',
-    marginTop: 14,
+    fontWeight: 'bold',
     marginBottom: 10,
   },
   filterChipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
   },
   filterChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    marginRight: 8,
-    marginBottom: 8,
   },
-  filterBottomActions: {
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterActionsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(148, 163, 184, 0.2)',
+    marginTop: 24,
+    gap: 12,
   },
   filterResetBtn: {
     flex: 1,
@@ -1266,13 +1593,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+  },
+  filterResetText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   filterApplyBtn: {
     flex: 2,
     height: 48,
     borderRadius: 14,
+    backgroundColor: AppColors.primaryColor,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  filterApplyText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
