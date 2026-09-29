@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { MapsLocation02Icon } from '@hugeicons/core-free-icons';
 import gymezyLogo from '../assets/logo/gymezy.png';
 import './Footer.css';
 
@@ -46,6 +48,16 @@ export default function Footer() {
               <span className="contact-col-val">
                 Second Floor, Mahalakshmi Nagar, Plot No 5, Jyothi Nagar, Moulivakkam, Kolathuvancheri, Tamil Nadu 600125
               </span>
+              <a
+                href="https://maps.app.goo.gl/dr3vvVmQom43A1Yz7"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer-map-link"
+                title="View on Google Maps"
+              >
+                <HugeiconsIcon icon={MapsLocation02Icon} size={15} />
+                <span>Map</span>
+              </a>
             </div>
             <div className="footer-contact-item-stacked">
               <span className="contact-col-label">Phone Number:</span>

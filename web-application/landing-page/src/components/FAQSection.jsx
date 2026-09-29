@@ -31,13 +31,13 @@ const faqs = [
     id: 5,
     question: 'Which cities and locations is GYMEZY currently available in?',
     answer:
-      'GYMEZY is live across major fitness hubs including Bangalore, Mumbai, Delhi NCR, Hyderabad, Chennai, and Pune, with partner gym expansions continuously launching nationwide.'
+      'GYMEZY is currently focused on premier fitness centers across Chennai, Tamil Nadu (including Moulivakkam, Porur, Anna Nagar, T. Nagar, OMR, Velachery, and surrounding areas), with partner gym networks actively onboarding city-wide.'
   },
   {
     id: 6,
-    question: 'Is the GYMEZY mobile app available for iOS and Android?',
+    question: 'Is the GYMEZY mobile app available on Android and Web?',
     answer:
-      'Yes! The GYMEZY mobile app is designed for both iOS (Apple App Store) and Android (Google Play Store), providing instant pass bookings, workout logging, trainer scheduling, and contactless QR entry.'
+      'Yes! The GYMEZY mobile app is available on Android (Google Play Store) and Mobile Web, providing instant pass bookings, workout logging, trainer scheduling, and contactless QR entry.'
   }
 ];
 

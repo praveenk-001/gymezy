@@ -302,7 +302,7 @@ export default function LandingPage() {
         <DualEcosystemSection id="ecosystem" />
 
         {/* =================================================================
-            8. MOBILE APP SHOWCASE SECTION (APP STORE & GOOGLE PLAY)
+            8. MOBILE APP SHOWCASE SECTION (ANDROID & GOOGLE PLAY)
             ================================================================= */}
         <MobileAppSection id="app" />
 

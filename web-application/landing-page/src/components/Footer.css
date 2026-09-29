@@ -127,6 +127,46 @@
   color: var(--brand-color, #00bf62);
 }
 
+.footer-contact-col a.footer-map-link,
+.footer-map-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-top: 6px !important;
+  width: fit-content !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--brand-color, #00bf62) !important;
+  font-family: var(--font-main, 'Plus Jakarta Sans', sans-serif) !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  transition: all 0.2s ease !important;
+  transform: none !important;
+  line-height: 1.4 !important;
+  cursor: pointer;
+}
+
+.footer-contact-col a.footer-map-link:hover,
+.footer-map-link:hover {
+  color: var(--brand-color-hover, #009e50) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: translateX(3px) !important;
+  text-decoration: underline !important;
+}
+
+.footer-map-link svg {
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .footer-bottom-copyright {
   border-top: 1px solid #f1f5f9;
   padding-top: 24px;

@@ -13,8 +13,8 @@
 
 ## Target Geography & Availability
 
-- Primary Network: India (Bangalore, Mumbai, Delhi NCR, Hyderabad, Chennai, Pune) and expanding globally.
-- Access: Mobile Web, iOS App, Android App.
+- Primary Network: Chennai, Tamil Nadu, India (focusing on Moulivakkam, Porur, Anna Nagar, T. Nagar, OMR, Velachery, and surrounding areas).
+- Access: Android App (Google Play Store) and Mobile Web.
 
 ## Official Links
 
