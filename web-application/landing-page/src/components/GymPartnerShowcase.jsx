@@ -35,7 +35,7 @@ export default function GymPartnerShowcase({
 
               {/* Bottom-Left White Management Card */}
               <div className="telemetry-routine-card">
-                <h4 className="routine-card-title">Live Partner Overview</h4>
+                <div className="routine-card-title">Live Partner Overview</div>
                 <div className="routine-chips-row">
                   <span className="routine-chip chip-active">Verified Gym</span>
                   <span className="routine-chip">Smart Check-in</span>

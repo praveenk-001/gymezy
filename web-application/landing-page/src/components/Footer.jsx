@@ -23,7 +23,7 @@ export default function Footer() {
 
           {/* Explore Column */}
           <div className="footer-nav-col">
-            <h4 className="footer-col-header">Explore</h4>
+            <h3 className="footer-col-header">Explore</h3>
             <Link to="/">Home</Link>
             <Link to="/about">About GYMEZY</Link>
             <Link to="/customers">For Customers</Link>
@@ -34,7 +34,7 @@ export default function Footer() {
 
           {/* Partnerships Column */}
           <div className="footer-nav-col">
-            <h4 className="footer-col-header">Partnerships</h4>
+            <h3 className="footer-col-header">Partnerships</h3>
             <Link to="/gym-owners">For Gym Owners</Link>
             <Link to="/trainers">For Trainers</Link>
             <Link to="/gym-owners#pricing">Partner Plans</Link>
@@ -42,7 +42,7 @@ export default function Footer() {
 
           {/* Contact Column */}
           <div className="footer-nav-col footer-contact-col">
-            <h4 className="footer-col-header">Contact &amp; Office</h4>
+            <h3 className="footer-col-header">Contact &amp; Office</h3>
             <div className="footer-contact-item-stacked">
               <span className="contact-col-label">Registered office:</span>
               <span className="contact-col-val">

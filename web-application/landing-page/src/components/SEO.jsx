@@ -3,33 +3,33 @@ import { useLocation } from 'react-router-dom';
 
 const routeSeoData = {
   '/': {
-    title: 'GYMEZY - Unlock Best Gyms in Chennai, Daily Passes & Personal Trainers',
+    title: 'GYMEZY - Best Gyms in Chennai & Personal Trainers',
     description:
-      'Discover top-rated fitness centers in Chennai with GYMEZY. Book flexible daily gym drop-in passes, multi-gym memberships, and verified personal trainers with zero lock-in contracts.',
+      'Find top gyms in Chennai with GYMEZY. Book daily drop-in passes, flexible multi-gym memberships, and personal trainers with zero lock-in contracts.',
     canonical: 'https://gymezy.com/'
   },
   '/about': {
-    title: 'About GYMEZY - Empowering Fitness Freedom & Flexible Gym Access in Chennai',
+    title: 'About GYMEZY - Best Gym Access & Fitness in Chennai',
     description:
-      'Learn about GYMEZY mission to eliminate fitness barriers by connecting athletes with verified fitness centers, certified trainers, and flexible passes across Chennai.',
+      'Learn how GYMEZY connects athletes with verified fitness centers, certified trainers, and flexible daily passes across Chennai with zero lock-in.',
     canonical: 'https://gymezy.com/about'
   },
   '/customers': {
-    title: 'GYMEZY For Customers - Daily Gym Passes & Personal Trainers in Chennai',
+    title: 'GYMEZY For Customers - Gym Passes & Trainers Chennai',
     description:
-      'Explore pay-per-session daily gym passes, flexible multi-duration memberships, and 1-on-1 personal coaches in Chennai with instant OTP front desk check-in.',
+      'Explore pay-per-session daily gym passes, flexible memberships, and verified personal coaches in Chennai with instant OTP and QR front desk check-in.',
     canonical: 'https://gymezy.com/customers'
   },
   '/gym-owners': {
-    title: 'GYMEZY For Gym Owners - Grow Membership & Monetize Capacity in Chennai',
+    title: 'GYMEZY For Gym Owners - Grow Membership in Chennai',
     description:
-      'Partner with GYMEZY to list your Chennai fitness center for free, capture walk-in drop-in revenue, and verify members with automated QR pass scanning.',
+      'Partner with GYMEZY to list your Chennai fitness center for free, monetize off-peak floor capacity, and verify members with automated QR pass scanning.',
     canonical: 'https://gymezy.com/gym-owners'
   },
   '/trainers': {
-    title: 'GYMEZY For Trainers - Build Your Coaching Brand in Chennai',
+    title: 'GYMEZY For Trainers - Coaching Platform in Chennai',
     description:
-      'Join GYMEZY as a certified fitness trainer in Chennai. Connect with motivated clients, schedule 1-on-1 sessions, and manage workout nutrition plans effortlessly.',
+      'Join GYMEZY as a certified fitness trainer in Chennai. Connect with motivated clients, schedule 1-on-1 sessions, and manage workout routines effortlessly.',
     canonical: 'https://gymezy.com/trainers'
   }
 };

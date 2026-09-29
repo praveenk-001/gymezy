@@ -40,7 +40,7 @@ export default function MobileAppSection({ id = 'app' }) {
                   </svg>
                 </div>
                 <div className="app-feature-text-block">
-                  <h4 className="app-feature-title">1-Tap Gym Discovery</h4>
+                  <h3 className="app-feature-title">1-Tap Gym Discovery</h3>
                   <p className="app-feature-sub">Find top-rated gyms near you with real-time distance, equipment, and reviews.</p>
                 </div>
               </div>
@@ -56,7 +56,7 @@ export default function MobileAppSection({ id = 'app' }) {
                   </svg>
                 </div>
                 <div className="app-feature-text-block">
-                  <h4 className="app-feature-title">Flexible Passes &amp; Classes</h4>
+                  <h3 className="app-feature-title">Flexible Passes &amp; Classes</h3>
                   <p className="app-feature-sub">Reserve single-session drop-ins, weekly passes, or group classes in seconds.</p>
                 </div>
               </div>
@@ -71,7 +71,7 @@ export default function MobileAppSection({ id = 'app' }) {
                   </svg>
                 </div>
                 <div className="app-feature-text-block">
-                  <h4 className="app-feature-title">Instant Digital OTP &amp; QR Entry</h4>
+                  <h3 className="app-feature-title">Instant Digital OTP &amp; QR Entry</h3>
                   <p className="app-feature-sub">Keyless contactless entry at front desks without physical paperwork.</p>
                 </div>
               </div>
