@@ -9,6 +9,7 @@ import PhilosophyCarousel from '../../components/PhilosophyCarousel';
 import DualEcosystemSection from '../../components/DualEcosystemSection';
 import MobileAppSection from '../../components/MobileAppSection';
 import GymAlertsBanner from '../../components/GymAlertsBanner';
+import FAQSection from '../../components/FAQSection';
 import Footer from '../../components/Footer';
 import { openLeadModal, openUserLeadModal, openVideoModal } from '../../utils/modalUtils';
 
@@ -309,6 +310,11 @@ export default function LandingPage() {
             6. GYMEZY ALERTS / VIP BANNER
             ================================================================= */}
         <GymAlertsBanner id="newsletter" />
+
+        {/* =================================================================
+            7. FREQUENTLY ASKED QUESTIONS (SEO & GEO ACCORDION)
+            ================================================================= */}
+        <FAQSection id="faq" />
 
         {/* =================================================================
             11. JOIN US WHENEVER READY (FINAL CALL TO ACTION)

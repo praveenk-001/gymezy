@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
+import SEO from './components/SEO';
 import LandingPage from './pages/landing_page';
 import CustomersPage from './pages/customers';
 import GymOwnersPage from './pages/gym_owners';
@@ -99,6 +100,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <SEO />
       <div className="app-root">
         <Routes>
           <Route path="/" element={<LandingPage />} />
